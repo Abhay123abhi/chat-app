@@ -94,5 +94,5 @@ This project is for educational/demo purposes.
 ---
 
 ## Contribution
-
-Feel free to fork and submit pull requests!
+Contributions are welcome!  
+Feel free to fork this repository and submit pull requests!
