@@ -1,22 +1,10 @@
 import { httpClient } from "../config/AxiosHelper";
 
-export const createRoomApi = async (roomDetail) => {
-  const respone = await httpClient.post(`/api/v1/rooms`, roomDetail, {
-    headers: {
-      "Content-Type": "text/plain",
-    },
-  });
-  return respone.data;
-};
-
-export const joinChatApi = async (roomId) => {
-  const response = await httpClient.get(`/api/v1/rooms/${roomId}`);
-  return response.data;
-};
-
-export const getMessagess = async (roomId, size = 50, page = 0) => {
-  const response = await httpClient.get(
-    `/api/v1/rooms/${roomId}/messages?size=${size}&page=${page}`
-  );
-  return response.data;
-};
+export const createRoomApi = async (roomId) =>
+  (await httpClient.post("/api/v1/rooms", roomId, { headers: { "Content-Type": "text/plain" } })).data;
+export const joinChatApi = async (roomId) =>
+  (await httpClient.get(`/api/v1/rooms/${encodeURIComponent(roomId)}`)).data;
+export const getMessages = async (roomId, params = {}, signal) =>
+  (await httpClient.get(`/api/v1/rooms/${encodeURIComponent(roomId)}/messages`, { params, signal })).data;
+export const sendMessageApi = async (roomId, message) =>
+  (await httpClient.post(`/api/v1/rooms/${encodeURIComponent(roomId)}/messages`, message)).data;

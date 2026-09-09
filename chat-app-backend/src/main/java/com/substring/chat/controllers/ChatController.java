@@ -1,52 +1,34 @@
 package com.substring.chat.controllers;
 
 import com.substring.chat.entities.Message;
-import com.substring.chat.entities.Room;
 import com.substring.chat.playload.MessageRequest;
-import com.substring.chat.repositories.RoomRepository;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestBody;
+import com.substring.chat.services.MessageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-
-@Controller
-@CrossOrigin("http://localhost:5173")
+@RestController
+@RequestMapping("/api/v1/rooms/{roomId}/messages")
 public class ChatController {
+    private static final Logger log = LoggerFactory.getLogger(ChatController.class);
+    private final MessageService messages;
+    private final SimpMessagingTemplate broker;
 
-
-    private RoomRepository roomRepository;
-
-    public ChatController(RoomRepository roomRepository) {
-        this.roomRepository = roomRepository;
+    public ChatController(MessageService messages, SimpMessagingTemplate broker) {
+        this.messages = messages;
+        this.broker = broker;
     }
 
-
-    //for sending and receiving messages
-    @MessageMapping("/sendMessage/{roomId}")// /app/sendMessage/roomId
-    @SendTo("/topic/room/{roomId}")//subscribe
-    public Message sendMessage(
-            @DestinationVariable String roomId,
-            @RequestBody MessageRequest request
-    ) {
-
-        Room room = roomRepository.findByRoomId(request.getRoomId());
-        Message message = new Message();
-        message.setContent(request.getContent());
-        message.setSender(request.getSender());
-        message.setTimeStamp(LocalDateTime.now());
-        if (room != null) {
-            room.getMessages().add(message);
-            roomRepository.save(room);
-        } else {
-            throw new RuntimeException("room not found !!");
+    @PostMapping
+    public Message send(@PathVariable String roomId, @RequestBody MessageRequest request) {
+        Message saved = messages.save(roomId, request);
+        try {
+            broker.convertAndSend("/topic/room/" + saved.getRoomId(), saved);
+        } catch (RuntimeException failure) {
+            // A failed notification must not turn a successful durable write into a failed send.
+            log.warn("Live notification failed for message {}", saved.getId(), failure);
         }
-
-        return message;
-
-
+        return saved;
     }
 }
