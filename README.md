@@ -4,6 +4,35 @@ A guest-room chat application built with Java 21, Spring Boot, MongoDB, React an
 
 The backend persists messages before acknowledging sends. WebSocket notifications provide live updates; cursor-based history recovers missed updates. This version runs one backend instance and is intended for local demonstration, not private conversations on the public internet.
 
+## Choose a setup
+
+| Setup | Requirements | Start command (repository root) |
+| --- | --- | --- |
+| Everything in Docker | Docker Desktop, Linux containers | `docker compose up --build` |
+| App containers + existing database | Docker Desktop and a reachable MongoDB URI | `docker compose -f compose.external-db.yml up --build` |
+| No containers | Java 21, Node.js 22, MongoDB 8 | Start backend and frontend separately as shown below |
+
+For a new checkout:
+
+```sh
+git clone https://github.com/Abhay123abhi/chat-app.git
+cd chat-app
+```
+
+To try these changes before they are merged, run `git switch --track origin/improvement/reliable-chat-foundation` in the fresh checkout. After merge, the setup is available on `main`.
+
+## How messages flow
+
+```mermaid
+flowchart TD
+    Client[React browser] -->|Send message over HTTP| API[Spring Boot]
+    API -->|Persist before acknowledgement| DB[(MongoDB)]
+    API -->|Live STOMP notification| Client
+    Client -->|Cursor history after reconnect| API
+```
+
+HTTP confirms storage; WebSocket notifications update connected browsers. History recovery and message IDs reconcile missed or repeated notifications. The in-process broker and per-room write locks currently require one backend instance. See [architecture and scaling](docs/architecture.md) for failure boundaries and the multi-instance plan.
+
 ## Run with Docker
 
 Requires Docker Desktop with Compose.
@@ -71,7 +100,15 @@ npm ci
 npm run dev
 ```
 
-On Windows use `mvnw.cmd` instead of `bash ./mvnw`. Vite proxies REST and SockJS to port 8080. The container uses nginx for the same-origin proxy. No frontend backend-URL edit is needed.
+On Windows PowerShell, run `./mvnw.cmd spring-boot:run` from `chat-app-backend`. Open the URL printed by Vite (normally http://localhost:5173). Vite proxies REST and SockJS to port 8080. The container uses nginx for the same-origin proxy. No frontend backend-URL edit is needed.
+
+## Troubleshooting
+
+- **Port already in use:** the full Docker stack binds 3000, 8080 and 27017 on localhost. Stop the conflicting service, change the host-side port in Compose, or use external-database mode if MongoDB is already installed.
+- **Browser shows a gateway error during startup:** wait for Spring Boot to finish starting. Check `docker compose logs --tail=100 backend mongo` if it persists.
+- **Backend requests a history migration:** follow the migration section against the same database used by the application.
+- **Database connection fails in external mode:** `localhost` inside the backend container is not your Windows host. Use `host.docker.internal`, check the database listener/firewall, and verify the URI's database name.
+- **Container exits with code 137:** check Docker Desktop's available memory and container logs. Increase the relevant memory limit for your workload; image disk size does not indicate RAM consumption.
 
 ## What works
 
@@ -122,7 +159,7 @@ node --test src/services/messageState.test.js
 npm run build
 ```
 
-GitHub Actions runs Java 21 tests and the frontend build. No load benchmark or production-scale guarantee is implied by the test sizes.
+GitHub Actions runs Java 21 tests, frontend tests/build, both Compose configuration checks, and a container build/startup smoke test that creates a room and persists/reads a message through the frontend proxy. Browser reconnect behaviour and legacy-data migration still need the manual checks below. No load benchmark or production-scale guarantee is implied by the test sizes.
 
 ## Manual recovery checks
 
