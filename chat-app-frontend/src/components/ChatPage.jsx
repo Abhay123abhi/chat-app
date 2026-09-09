@@ -3,7 +3,6 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
-import EmojiPicker from "emoji-picker-react";
 import useChatContext from "../context/ChatContext";
 import { getMessages, sendMessageApi } from "../services/RoomService";
 import { mergeMessages } from "../services/messageState";
@@ -14,13 +13,11 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [pending, setPending] = useState([]);
   const [input, setInput] = useState("");
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [status, setStatus] = useState("Connecting");
   const [historyError, setHistoryError] = useState("");
   const [hasOlder, setHasOlder] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [newMessages, setNewMessages] = useState(false);
-  const [dark, setDark] = useState(() => localStorage.getItem("chat-theme") === "dark");
   const box = useRef(null);
   const follow = useRef(true);
   const activeRoom = useRef(roomId);
@@ -34,9 +31,6 @@ export default function ChatPage() {
     return () => { mounted.current = false; };
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("chat-theme", dark ? "dark" : "light");
-  }, [dark]);
 
   useEffect(() => {
     if (!connected || !roomId || !currentUser) navigate("/", { replace: true });
@@ -185,14 +179,13 @@ export default function ChatPage() {
     navigate("/");
   }
 
-  return <div className={dark ? "dark" : ""}>
+  return <div className="dark chat-shell">
     <div className="relative flex h-dvh flex-col bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-300 bg-white px-5 py-4 dark:border-gray-700 dark:bg-gray-800">
-        <div><h1 className="text-lg font-semibold break-all">Room: {roomId}</h1>
+        <div><h1 className="text-lg font-semibold break-all"><span className="room-hash">#</span> {roomId}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-300">{currentUser} · Guest room</p></div>
         <div className="flex items-center gap-4">
-          <span role="status" className="text-sm">{status}</span>
-          <button type="button" onClick={() => setDark(value => !value)} className="rounded border px-3 py-2">{dark ? "Light" : "Dark"}</button>
+          <span role="status" className="connection-status">{status}</span>
           <button type="button" onClick={leave} className="rounded border px-3 py-2">Leave</button>
         </div>
       </header>
@@ -205,7 +198,7 @@ export default function ChatPage() {
         }}>
         {hasOlder && <div className="mb-4 text-center"><button onClick={loadOlder} disabled={loadingOlder} className="rounded border px-4 py-2 disabled:opacity-50">
           {loadingOlder ? "Loading…" : "Load older messages"}</button></div>}
-        {!messages.length && !pending.length && !historyError && <p className="py-10 text-center text-gray-500">Messages will appear here.</p>}
+        {!messages.length && !pending.length && !historyError && <p className="py-10 text-center text-gray-500">Start the conversation. Send the first message below.</p>}
         {messages.map(message => <article key={message.id} className={`mb-3 flex ${message.sender === currentUser ? "justify-end" : "justify-start"}`}>
           <div className={`max-w-[85%] rounded-xl px-4 py-3 md:max-w-[65%] ${message.sender === currentUser ? "bg-blue-700 text-white" : "bg-white dark:bg-gray-800"}`}>
             <p className="text-sm font-semibold">{message.sender}</p>
@@ -224,10 +217,6 @@ export default function ChatPage() {
         setNewMessages(false);
         box.current.scrollTop = box.current.scrollHeight;
       }}>New messages ↓</button>}
-      {showEmojiPicker && <div className="absolute bottom-28 left-4 z-10"><EmojiPicker width="min(350px, 90vw)" height={350} onEmojiClick={emoji => {
-        setInput(value => (value + emoji.emoji).slice(0, 4000));
-        setShowEmojiPicker(false);
-      }} /></div>}
       <form onSubmit={send} className="flex items-end gap-3 border-t border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <label className="min-w-0 flex-1"><span className="sr-only">Message</span>
           <textarea value={input} onChange={event => setInput(event.target.value)} maxLength={4000} rows={2}
@@ -237,7 +226,6 @@ export default function ChatPage() {
               }
             }}
             placeholder="Write a message…" className="w-full resize-none rounded-lg border bg-transparent p-3 focus:outline-blue-500" /></label>
-        <button type="button" aria-label="Choose emoji" aria-expanded={showEmojiPicker} onClick={() => setShowEmojiPicker(value => !value)} className="rounded border px-3 py-3">☺</button>
         <button disabled={!input.trim()} className="rounded-lg bg-blue-700 px-5 py-3 text-white disabled:opacity-50">Send</button>
       </form>
     </div>

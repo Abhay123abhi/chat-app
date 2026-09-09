@@ -1,21 +1,30 @@
 services:
   frontend:
     build: ./chat-app-frontend
+    mem_limit: ${FRONTEND_MEMORY_LIMIT:-64m}
+    environment:
+      NGINX_WORKER_PROCESSES: "1"
     ports:
       - "127.0.0.1:3000:80"
     depends_on:
       - backend
   backend:
     build: ./chat-app-backend
+    mem_limit: ${BACKEND_MEMORY_LIMIT:-512m}
     ports:
       - "127.0.0.1:8080:8080"
     environment:
+      JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=10 -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
+      SERVER_TOMCAT_THREADS_MAX: "40"
+      SERVER_TOMCAT_THREADS_MIN_SPARE: "4"
       SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/chat-app?w=majority&journal=true
     depends_on:
       mongo:
         condition: service_healthy
   mongo:
     image: mongo:8.0
+    mem_limit: ${MONGO_MEMORY_LIMIT:-768m}
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25", "--bind_ip_all"]
     ports:
       - "127.0.0.1:27017:27017"
     volumes:

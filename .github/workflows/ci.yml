@@ -5,6 +5,32 @@ on:
 permissions:
   contents: read
 jobs:
+  containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet
+      - run: docker compose -f compose.external-db.yml config --quiet
+        env:
+          SPRING_DATA_MONGODB_URI: mongodb://host.docker.internal:27017/chatapp
+      - run: docker compose up --build -d
+      - name: Check persistence through the frontend proxy
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS -H 'Content-Type: text/plain' --data 'container-check' http://localhost:3000/api/v1/rooms; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://localhost:3000/api/v1/rooms/container-check
+          curl -fsS -H 'Content-Type: application/json' --data '{"clientMessageId":"smoke-1","sender":"CI","content":"persisted"}' http://localhost:3000/api/v1/rooms/container-check/messages
+          curl -fsS 'http://localhost:3000/api/v1/rooms/container-check/messages?limit=10' | python3 -c 'import json,sys; data=json.load(sys.stdin); assert len(data["messages"]) == 1; assert data["messages"][0]["content"] == "persisted"'
+          docker compose images
+          docker stats --no-stream
+      - if: always()
+        run: docker compose logs --tail=100
+      - if: always()
+        run: docker compose down
   backend:
     runs-on: ubuntu-latest
     steps:
