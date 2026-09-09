@@ -24,8 +24,8 @@ const JoinCreateChat = () => {
   }
 
   function validateForm() {
-    if (detail.roomId === "" || detail.userName === "") {
-      toast.error("Invalid Input !!");
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(detail.roomId.trim()) || !detail.userName.trim() || detail.userName.trim().length > 50) {
+      toast.error("Use a name up to 50 characters and a room ID with letters, digits, underscores or hyphens.");
       return false;
     }
     return true;
@@ -34,15 +34,15 @@ const JoinCreateChat = () => {
   async function joinChat() {
     if (validateForm()) {
       try {
-        const room = await joinChatApi(detail.roomId);
+        const room = await joinChatApi(detail.roomId.trim());
         toast.success("Joined successfully!");
-        setCurrentUser(detail.userName);
+        setCurrentUser(detail.userName.trim());
         setRoomId(room.roomId);
         setConnected(true);
         navigate("/chat");
       } catch (error) {
-        if (error.status === 400) {
-          toast.error(error.response.data);
+        if (error.response?.status === 404 || error.response?.status === 400) {
+          toast.error(error.response.data?.message || "Room not found");
         } else {
           toast.error("Error in joining room");
         }
@@ -54,14 +54,14 @@ const JoinCreateChat = () => {
   async function createRoom() {
     if (validateForm()) {
       try {
-        const response = await createRoomApi(detail.roomId);
+        const response = await createRoomApi(detail.roomId.trim());
         toast.success("Room created successfully!");
-        setCurrentUser(detail.userName);
+        setCurrentUser(detail.userName.trim());
         setRoomId(response.roomId);
         setConnected(true);
         navigate("/chat");
       } catch (error) {
-        if (error.status === 400) {
+        if (error.response?.status === 409) {
           toast.error("Room already exists!");
         } else {
           toast.error("Error in creating room");

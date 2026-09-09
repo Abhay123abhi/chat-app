@@ -1,25 +1,26 @@
 package com.substring.chat.entities;
 
-import lombok.AllArgsConstructor;
+import java.time.Instant;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
+@Document("messages")
+@CompoundIndexes({
+    @CompoundIndex(name = "room_sequence", def = "{'roomId': 1, 'sequence': 1}", unique = true),
+    @CompoundIndex(name = "room_request", def = "{'roomId': 1, 'clientMessageId': 1}", unique = true)
+})
 public class Message {
-
+    @Id private String id;
+    private String roomId;
+    private String clientMessageId;
+    private long sequence;
     private String sender;
     private String content;
-    private LocalDateTime timeStamp;
-
-    public Message(String sender, String content) {
-        this.sender = sender;
-        this.content = content;
-        this.timeStamp = LocalDateTime.now();
-    }
+    private Instant timeStamp;
 }
