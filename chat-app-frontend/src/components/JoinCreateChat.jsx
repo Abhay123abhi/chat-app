@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { createRoomApi, joinChatApi } from "../services/RoomService";
 import useChatContext from "../context/ChatContext";
 import { useNavigate } from "react-router";
+import { FiArrowRight, FiHash, FiMessageCircle } from "react-icons/fi";
 
 const JoinCreateChat = () => {
   const [detail, setDetail] = useState({
@@ -75,24 +76,65 @@ const JoinCreateChat = () => {
 
   return (
     <main className="entry-page">
-      <div className="entry-brand"><span className="brand-mark" aria-hidden="true">#</span> room</div>
-      <section className="entry-card" aria-labelledby="entry-title">
-        <p className="entry-eyebrow">A SPACE TO TALK</p>
-        <h1 id="entry-title">Good conversations.<br /><span>One room away.</span></h1>
-        <p className="entry-description">Pick a name, enter a room ID, and start talking.</p>
-        <form onSubmit={event => { event.preventDefault(); joinChat(); }}>
-          <label htmlFor="userName">Your name</label>
-          <input id="userName" name="userName" autoComplete="nickname" maxLength={50}
-            value={detail.userName} onChange={handleFormInputChange} placeholder="e.g. Abhay" required />
-          <label htmlFor="roomId">Room ID</label>
-          <input id="roomId" name="roomId" maxLength={64} autoCapitalize="none" spellCheck={false}
-            pattern="[A-Za-z0-9_-]{1,64}" aria-describedby="room-help"
-            value={detail.roomId} onChange={handleFormInputChange} placeholder="e.g. weekend-plans" required />
-          <p id="room-help" className="field-help">Use letters, numbers, underscores or hyphens.</p>
-          <button type="submit" className="entry-primary" disabled={busy}>{busy ? "Connecting…" : "Join room →"}</button>
-          <button type="button" className="entry-secondary" disabled={busy} onClick={createRoom}>Create a new room</button>
-        </form>
-        <p className="entry-note">Guest rooms · Anyone with the room ID can join.</p>
+      <section className="entry-visual" aria-label="Room messaging overview">
+        <div className="entry-brand">
+          <span className="brand-mark" aria-hidden="true"><FiMessageCircle /></span>
+          <span>room<span className="brand-dot">.</span></span>
+        </div>
+
+        <div className="entry-hero-copy">
+          <p className="entry-kicker">LIVE ROOMS · NO SIGN-UP</p>
+          <h1>Less feed.<br />More <em>talk.</em></h1>
+          <p>Fast guest conversations with durable messages and live updates.</p>
+        </div>
+
+        <div className="entry-demo" aria-hidden="true">
+          <div className="demo-grid"></div>
+          <div className="demo-bubble demo-bubble-a"><span>AJ</span><p>Shipping the fix now.</p></div>
+          <div className="demo-bubble demo-bubble-b"><span>RK</span><p>Got it — I’m in the room.</p></div>
+          <div className="demo-signal"><i></i><span>live</span></div>
+        </div>
+
+        <div className="entry-features" aria-label="Highlights">
+          <span>Guest rooms</span>
+          <span>Realtime updates</span>
+          <span>Persistent history</span>
+        </div>
+      </section>
+
+      <section className="entry-panel">
+        <div className="entry-card" aria-labelledby="entry-title">
+          <p className="entry-eyebrow">ENTER A CONVERSATION</p>
+          <h2 id="entry-title">Your room is one ID away.</h2>
+          <p className="entry-description">Use a display name and room ID. Join an existing conversation or create a fresh one.</p>
+
+          <form onSubmit={event => { event.preventDefault(); joinChat(); }}>
+            <div className="entry-field">
+              <label htmlFor="userName">Display name</label>
+              <input id="userName" name="userName" autoComplete="nickname" maxLength={50}
+                value={detail.userName} onChange={handleFormInputChange} placeholder="Abhay" required />
+            </div>
+
+            <div className="entry-field">
+              <label htmlFor="roomId">Room ID</label>
+              <div className="room-input-wrap">
+                <FiHash aria-hidden="true" />
+                <input id="roomId" name="roomId" maxLength={64} autoCapitalize="none" spellCheck={false}
+                  pattern="[A-Za-z0-9_-]{1,64}" aria-describedby="room-help"
+                  value={detail.roomId} onChange={handleFormInputChange} placeholder="weekend-plans" required />
+              </div>
+              <p id="room-help" className="field-help">Letters, numbers, underscores or hyphens.</p>
+            </div>
+
+            <button type="submit" className="entry-primary" disabled={busy}>
+              <span>{busy ? "Connecting…" : "Join room"}</span>
+              {!busy && <FiArrowRight aria-hidden="true" />}
+            </button>
+            <button type="button" className="entry-secondary" disabled={busy} onClick={createRoom}>Create this room instead</button>
+          </form>
+
+          <p className="entry-note"><span>●</span> Guest room · Anyone with the room ID can join.</p>
+        </div>
       </section>
     </main>
   );
