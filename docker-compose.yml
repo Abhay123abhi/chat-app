@@ -22,17 +22,15 @@ services:
       mongo:
         condition: service_healthy
   mongo:
-    image: mongo:8.0
-    mem_limit: ${MONGO_MEMORY_LIMIT:-768m}
-    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25", "--bind_ip_all"]
-    ports:
-      - "127.0.0.1:27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
+  image: mongo:8.0
+  mem_limit: ${MONGO_MEMORY_LIMIT:-768m}
+  command: ["mongod", "--wiredTigerCacheSizeGB", "0.25", "--bind_ip_all"]
+  volumes:
+    - mongo-data:/data/db
+  healthcheck:
+    test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+    interval: 5s
+    timeout: 5s
+    retries: 20
 volumes:
   mongo-data:
