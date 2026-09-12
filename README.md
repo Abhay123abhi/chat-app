@@ -46,6 +46,7 @@ Open:
 
 ```text
 http://localhost:3000
+http://localhost:8081  --mongo express for GUI
 ```
 
 Open two browser windows, join the same room with different names, and send messages between them.
@@ -120,4 +121,4 @@ npm run build
 
 ## Current scope
 
-This is a guest-room demo, not a private messaging platform. Room IDs are not access control, users are not authenticated, and presence is kept in memory for the current backend instance.
+This is a guest-room, not a private messaging platform. Room IDs are not access control, users are not authenticated, and presence is kept in memory for the current backend instance.
