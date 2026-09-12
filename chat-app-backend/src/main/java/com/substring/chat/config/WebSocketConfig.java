@@ -48,10 +48,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 if (headers.getCommand() == StompCommand.SEND) {
                     throw new MessageDeliveryException("Send messages through the durable REST endpoint");
                 }
-                if (headers.getCommand() == StompCommand.SUBSCRIBE
-                        && (headers.getDestination() == null
-                        || !headers.getDestination().matches("/topic/room/[A-Za-z0-9_-]{1,64}"))) {
-                    throw new MessageDeliveryException("Invalid room subscription");
+                if (headers.getCommand() == StompCommand.SUBSCRIBE) {
+                    String destination = headers.getDestination();
+                    boolean messageTopic = destination != null
+                            && destination.matches("/topic/room/[A-Za-z0-9_-]{1,64}");
+                    boolean presenceTopic = destination != null
+                            && destination.matches("/topic/presence/[A-Za-z0-9_-]{1,64}");
+                    if (!messageTopic && !presenceTopic) {
+                        throw new MessageDeliveryException("Invalid room subscription");
+                    }
                 }
                 return message;
             }
