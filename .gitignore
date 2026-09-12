@@ -1,0 +1,9 @@
+.DS_Store
+*.log
+hs_err_pid*
+replay_pid*
+.idea/
+.vscode/
+node_modules/
+target/
+dist/
