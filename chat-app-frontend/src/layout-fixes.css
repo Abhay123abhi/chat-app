@@ -29,22 +29,49 @@ body {
 }
 
 .entry-hero-copy {
-  margin-top: clamp(38px, 6vh, 72px);
+  margin-top: clamp(34px, 5vh, 60px);
 }
 
 .entry-hero-copy h1 {
-  font-size: clamp(3.2rem, 5.8vw, 5.8rem);
+  font-size: clamp(3.1rem, 5.5vw, 5.5rem);
 }
 
 .entry-hero-copy > p:last-child {
-  margin-top: 20px;
-  font-size: clamp(15px, 1.35vw, 19px);
+  margin-top: 18px;
+  font-size: clamp(15px, 1.3vw, 18px);
 }
 
+/* Use the free space in the left panel and keep the demo bubbles separated. */
 .entry-demo {
-  height: clamp(135px, 19vh, 172px);
+  width: min(600px, 92%);
+  height: clamp(150px, 21vh, 190px);
+  margin: 34px 0 18px;
+  flex: 0 0 auto;
+}
+
+.demo-bubble {
+  max-width: min(72%, 300px);
+  padding: 10px 13px;
+}
+
+.demo-bubble-a {
+  left: 28px;
+  top: 30px;
+}
+
+.demo-bubble-b {
+  right: 28px;
+  bottom: 28px;
+  top: auto;
+}
+
+.demo-signal {
+  right: 16px;
+  top: 14px;
+}
+
+.entry-features {
   margin-top: auto;
-  margin-bottom: 20px;
 }
 
 .entry-panel {
@@ -112,15 +139,15 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 24px;
-  padding: 12px 0 16px;
+  margin-top: 18px;
+  padding: 10px 0 14px;
   border-bottom: 1px solid rgba(255,255,255,.12);
 }
 
 .room-icon {
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
   margin: 0;
   border-radius: 10px;
 }
@@ -130,14 +157,14 @@ body {
 }
 
 .room-identity p {
-  margin: 0 0 3px;
-  font-size: 9px;
-  letter-spacing: .14em;
+  margin: 0 0 2px;
+  font-size: 8px;
+  letter-spacing: .13em;
 }
 
 .room-identity h1 {
   margin: 0;
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -149,7 +176,7 @@ body {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  margin-top: 16px;
+  margin-top: 14px;
   padding-top: 0;
   border-top: 0;
   overflow: hidden;
@@ -157,7 +184,7 @@ body {
 
 .members-heading {
   flex: 0 0 auto;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .member-list {
@@ -170,7 +197,7 @@ body {
 }
 
 .member-group + .member-group {
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .member-group-label {
@@ -180,32 +207,32 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 0 6px;
-  padding: 5px 3px;
+  margin: 0 0 5px;
+  padding: 4px 3px;
   background: #1d399f;
   color: #9fb1ef;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 800;
   letter-spacing: .09em;
   text-transform: uppercase;
 }
 
 .member-group-label b {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
 }
 
 .member-row {
-  margin-bottom: 6px;
-  padding: 8px 9px;
+  margin-bottom: 5px;
+  padding: 7px 8px;
   border-radius: 10px;
 }
 
 .member-avatar {
-  width: 32px;
-  height: 32px;
-  flex-basis: 32px;
-  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
+  border-radius: 9px;
 }
 
 .member-copy strong {
@@ -214,122 +241,147 @@ body {
 
 .sidebar-bottom {
   flex: 0 0 auto;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
+  gap: 7px;
+  margin-top: 10px;
+  padding-top: 10px;
 }
 
 .leave-button {
-  min-height: 38px;
-  padding: 8px 10px;
+  min-height: 36px;
+  padding: 7px 10px;
 }
 
-/* Main panel: only messages scroll. */
+/* Main panel: header fixed, only messages scroll. */
 .conversation-panel {
+  position: relative;
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 
 .conversation-header {
-  min-height: 58px;
-  padding: 10px clamp(18px, 3vw, 38px);
+  min-height: 52px;
+  padding: 8px clamp(18px, 3vw, 38px);
 }
 
 .conversation-header > div > p {
-  margin: 0 0 2px;
-  font-size: 8px;
-  letter-spacing: .13em;
+  margin: 0 0 1px;
+  font-size: 7px;
+  letter-spacing: .12em;
 }
 
 .conversation-header h2 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   line-height: 1.1;
 }
 
 .conversation-presence {
-  gap: 1px;
+  gap: 0;
 }
 
 .conversation-presence > span {
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .conversation-presence small {
-  font-size: 9px;
+  font-size: 8px;
 }
 
 .message-stream {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 18px clamp(18px, 3vw, 38px) 22px;
+  padding: 16px clamp(18px, 3vw, 38px) 86px;
 }
 
 .message-row {
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 9px;
+  margin-bottom: 9px;
 }
 
 .message-content {
   max-width: min(68%, 620px);
 }
 
-/* Composer stays visible at the bottom and is intentionally compact. */
+/* Composer is pinned inside the conversation viewport, independent from message scroll. */
 .composer {
-  position: relative;
-  z-index: 5;
-  flex: 0 0 auto;
-  padding: 9px clamp(18px, 3vw, 38px) 10px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 8px clamp(18px, 3vw, 38px) 9px;
   border-top: 1px solid rgba(23,25,31,.11);
-  background: rgba(255,250,241,.98);
-  box-shadow: 0 -8px 24px rgba(50,44,34,.035);
+  background: rgba(255,250,241,.985);
+  box-shadow: 0 -10px 28px rgba(50,44,34,.06);
+  backdrop-filter: blur(12px);
 }
 
 .composer-inner {
   width: min(100%, 860px);
-  gap: 9px;
+  gap: 8px;
 }
 
 .composer textarea {
-  height: 44px;
-  min-height: 44px;
-  max-height: 96px;
-  padding: 10px 13px;
+  height: 42px;
+  min-height: 42px;
+  max-height: 88px;
+  padding: 9px 12px;
   border-radius: 12px;
   line-height: 1.35;
 }
 
 .send-button {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .new-message-button {
-  bottom: 72px;
+  bottom: 68px;
 }
 
 @media (max-height: 760px) and (min-width: 901px) {
   .entry-visual {
-    padding-block: 24px;
+    padding-block: 22px;
   }
 
   .entry-hero-copy {
-    margin-top: 28px;
+    margin-top: 24px;
   }
 
   .entry-hero-copy h1 {
-    font-size: clamp(3rem, 5vw, 4.8rem);
+    font-size: clamp(2.9rem, 4.8vw, 4.6rem);
+  }
+
+  .entry-hero-copy > p:last-child {
+    margin-top: 14px;
   }
 
   .entry-demo {
-    height: 120px;
-    margin-bottom: 12px;
+    height: 132px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  .demo-bubble {
+    padding: 8px 11px;
+    font-size: 13px;
+  }
+
+  .demo-bubble-a {
+    left: 20px;
+    top: 22px;
+  }
+
+  .demo-bubble-b {
+    right: 20px;
+    bottom: 18px;
   }
 
   .entry-features {
@@ -337,11 +389,11 @@ body {
   }
 
   .entry-card {
-    padding: 24px 30px;
+    padding: 22px 30px;
   }
 
   .entry-card h2 {
-    font-size: 2.35rem;
+    font-size: 2.2rem;
   }
 }
 
@@ -401,12 +453,12 @@ body {
   }
 
   .conversation-header {
-    min-height: 52px;
-    padding: 9px 14px;
+    min-height: 48px;
+    padding: 8px 14px;
   }
 
   .message-stream {
-    padding: 14px 12px 18px;
+    padding: 12px 12px 76px;
   }
 
   .message-content {
@@ -414,6 +466,6 @@ body {
   }
 
   .composer {
-    padding: 8px 10px 9px;
+    padding: 7px 10px 8px;
   }
 }
