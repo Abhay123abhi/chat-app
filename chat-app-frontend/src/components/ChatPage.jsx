@@ -8,6 +8,21 @@ import useChatContext from "../context/ChatContext";
 import { getMessages, getPresence, sendMessageApi } from "../services/RoomService";
 import { mergeMessages } from "../services/messageState";
 
+function MemberRow({ member, currentUser }) {
+  const isCurrent = member.name === currentUser;
+  return (
+    <div className="member-row" title={member.lastSeen ? `Last seen ${new Date(member.lastSeen).toLocaleString()}` : undefined}>
+      <span className="member-avatar">{member.name?.slice(0, 1)?.toUpperCase()}</span>
+      <div className="member-copy">
+        <strong>{member.name}{isCurrent && <em> you</em>}</strong>
+        <span className={member.online ? "member-online" : "member-offline"}>
+          <i></i>{member.online ? "Online" : "Offline"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function ChatPage() {
   const { roomId, currentUser, connected, setConnected, setRoomId, setCurrentUser } = useChatContext();
   const navigate = useNavigate();
@@ -28,12 +43,13 @@ export default function ChatPage() {
   const syncNow = useRef(() => {});
   const confirmedCursor = useRef(null);
 
-  const onlineCount = useMemo(() => members.filter(member => member.online).length, [members]);
-  const visibleMembers = members.length
-    ? members
-    : currentUser
-      ? [{ name: currentUser, online: status === "Live", lastSeen: null }]
-      : [];
+  const visibleMembers = useMemo(() => {
+    if (members.length) return members;
+    return currentUser ? [{ name: currentUser, online: status === "Live", lastSeen: null }] : [];
+  }, [members, currentUser, status]);
+  const onlineMembers = useMemo(() => visibleMembers.filter(member => member.online), [visibleMembers]);
+  const offlineMembers = useMemo(() => visibleMembers.filter(member => !member.online), [visibleMembers]);
+  const onlineCount = onlineMembers.length;
 
   useEffect(() => {
     mounted.current = true;
@@ -77,7 +93,7 @@ export default function ChatPage() {
         acceptPresence(snapshot);
       } catch (error) {
         if (!disposed && error.code !== "ERR_CANCELED") {
-          // Presence is helpful context, but chat delivery must keep working if it is unavailable.
+          // Presence is optional; message delivery should keep working without it.
         }
       }
     }
@@ -112,10 +128,7 @@ export default function ChatPage() {
 
     const client = new Client({
       webSocketFactory: () => new SockJS("/chat"),
-      connectHeaders: {
-        roomId,
-        displayName: currentUser,
-      },
+      connectHeaders: { roomId, displayName: currentUser },
       reconnectDelay: 3000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
@@ -130,7 +143,7 @@ export default function ChatPage() {
         });
         client.subscribe(`/topic/presence/${roomId}`, frame => {
           try { acceptPresence(JSON.parse(frame.body)); }
-          catch { /* Presence will refresh from the REST snapshot on reconnect. */ }
+          catch { /* Presence refreshes again on reconnect. */ }
         });
         synchronizePresence();
         synchronize();
@@ -144,6 +157,7 @@ export default function ChatPage() {
       },
       onStompError: () => { if (!disposed) setStatus("Connection error"); },
     });
+
     syncNow.current = synchronize;
     client.activate();
     synchronize();
@@ -226,8 +240,10 @@ export default function ChatPage() {
 
         <div className="room-identity">
           <span className="room-icon"><FiHash /></span>
-          <p>Current room</p>
-          <h1>{roomId}</h1>
+          <div className="room-copy">
+            <p>Current room</p>
+            <h1>{roomId}</h1>
+          </div>
         </div>
 
         <section className="room-members" aria-label="Room members">
@@ -235,19 +251,21 @@ export default function ChatPage() {
             <span><FiUsers /> People</span>
             <small>{onlineCount} online</small>
           </div>
+
           <div className="member-list">
-            {visibleMembers.map((member, index) => {
-              const isCurrent = member.name === currentUser;
-              return <div className="member-row" key={`${member.name}-${index}`} title={member.lastSeen ? `Last seen ${new Date(member.lastSeen).toLocaleString()}` : undefined}>
-                <span className="member-avatar">{member.name?.slice(0, 1)?.toUpperCase()}</span>
-                <div className="member-copy">
-                  <strong>{member.name}{isCurrent && <em> you</em>}</strong>
-                  <span className={member.online ? "member-online" : "member-offline"}>
-                    <i></i>{member.online ? "Online" : "Offline"}
-                  </span>
-                </div>
-              </div>;
-            })}
+            {onlineMembers.length > 0 && (
+              <div className="member-group">
+                <p className="member-group-label"><span>Online</span><b>{onlineMembers.length}</b></p>
+                {onlineMembers.map(member => <MemberRow key={`online-${member.name}`} member={member} currentUser={currentUser} />)}
+              </div>
+            )}
+
+            {offlineMembers.length > 0 && (
+              <div className="member-group">
+                <p className="member-group-label"><span>Offline</span><b>{offlineMembers.length}</b></p>
+                {offlineMembers.map(member => <MemberRow key={`offline-${member.name}`} member={member} currentUser={currentUser} />)}
+              </div>
+            )}
           </div>
         </section>
 
@@ -260,12 +278,12 @@ export default function ChatPage() {
       <section className="conversation-panel">
         <header className="conversation-header">
           <div>
-            <p>CONVERSATION</p>
+            <p>Conversation</p>
             <h2>Messages</h2>
           </div>
           <div className="conversation-presence">
             <span><i></i>{onlineCount} online</span>
-            <small>{visibleMembers.length} {visibleMembers.length === 1 ? "person" : "people"} seen</small>
+            <small>{visibleMembers.length} {visibleMembers.length === 1 ? "person" : "people"}</small>
           </div>
         </header>
 
@@ -317,7 +335,7 @@ export default function ChatPage() {
         <form onSubmit={send} className="composer">
           <div className="composer-inner">
             <label><span className="sr-only">Message</span>
-              <textarea value={input} onChange={event => setInput(event.target.value)} maxLength={4000} rows={2}
+              <textarea value={input} onChange={event => setInput(event.target.value)} maxLength={4000} rows={1}
                 onKeyDown={event => {
                   if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                     event.preventDefault(); send(event);
@@ -327,7 +345,6 @@ export default function ChatPage() {
             </label>
             <button disabled={!input.trim()} className="send-button" aria-label="Send message"><FiSend /></button>
           </div>
-          <p>Enter to send · Shift + Enter for a new line</p>
         </form>
       </section>
     </main>
