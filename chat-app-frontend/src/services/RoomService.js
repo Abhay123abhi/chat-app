@@ -8,3 +8,5 @@ export const getMessages = async (roomId, params = {}, signal) =>
   (await httpClient.get(`/api/v1/rooms/${encodeURIComponent(roomId)}/messages`, { params, signal })).data;
 export const sendMessageApi = async (roomId, message) =>
   (await httpClient.post(`/api/v1/rooms/${encodeURIComponent(roomId)}/messages`, message)).data;
+export const getPresence = async (roomId, signal) =>
+  (await httpClient.get(`/api/v1/rooms/${encodeURIComponent(roomId)}/presence`, { signal })).data;

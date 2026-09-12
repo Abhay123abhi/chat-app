@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
-import { FiArrowDown, FiArrowLeft, FiHash, FiSend, FiWifi } from "react-icons/fi";
+import { FiArrowDown, FiArrowLeft, FiHash, FiSend, FiUsers, FiWifi } from "react-icons/fi";
 import useChatContext from "../context/ChatContext";
-import { getMessages, sendMessageApi } from "../services/RoomService";
+import { getMessages, getPresence, sendMessageApi } from "../services/RoomService";
 import { mergeMessages } from "../services/messageState";
 
 export default function ChatPage() {
@@ -13,6 +13,7 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [pending, setPending] = useState([]);
+  const [members, setMembers] = useState([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("Connecting");
   const [historyError, setHistoryError] = useState("");
@@ -27,6 +28,13 @@ export default function ChatPage() {
   const syncNow = useRef(() => {});
   const confirmedCursor = useRef(null);
 
+  const onlineCount = useMemo(() => members.filter(member => member.online).length, [members]);
+  const visibleMembers = members.length
+    ? members
+    : currentUser
+      ? [{ name: currentUser, online: status === "Live", lastSeen: null }]
+      : [];
+
   useEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; };
@@ -37,7 +45,7 @@ export default function ChatPage() {
   }, [connected, roomId, currentUser, navigate]);
 
   useEffect(() => {
-    if (!connected || !roomId) return;
+    if (!connected || !roomId || !currentUser) return;
     activeRoom.current = roomId;
     let disposed = false;
     let busy = false;
@@ -45,6 +53,7 @@ export default function ChatPage() {
     confirmedCursor.current = null;
     setMessages([]);
     setPending([]);
+    setMembers([]);
     setHasOlder(false);
     follow.current = true;
 
@@ -54,6 +63,23 @@ export default function ChatPage() {
       const requests = new Set(items.map(message => message.clientMessageId));
       setPending(previous => previous.filter(item => !requests.has(item.clientMessageId)));
       if (items.length && !follow.current) setNewMessages(true);
+    }
+
+    function acceptPresence(snapshot) {
+      if (!disposed && snapshot?.roomId === roomId && Array.isArray(snapshot.members)) {
+        setMembers(snapshot.members);
+      }
+    }
+
+    async function synchronizePresence() {
+      try {
+        const snapshot = await getPresence(roomId, abort.signal);
+        acceptPresence(snapshot);
+      } catch (error) {
+        if (!disposed && error.code !== "ERR_CANCELED") {
+          // Presence is helpful context, but chat delivery must keep working if it is unavailable.
+        }
+      }
     }
 
     async function synchronize() {
@@ -86,6 +112,10 @@ export default function ChatPage() {
 
     const client = new Client({
       webSocketFactory: () => new SockJS("/chat"),
+      connectHeaders: {
+        roomId,
+        displayName: currentUser,
+      },
       reconnectDelay: 3000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
@@ -98,9 +128,20 @@ export default function ChatPage() {
           try { accept([JSON.parse(frame.body)]); }
           catch { setHistoryError("A live update could not be read. History will recover it."); }
         });
+        client.subscribe(`/topic/presence/${roomId}`, frame => {
+          try { acceptPresence(JSON.parse(frame.body)); }
+          catch { /* Presence will refresh from the REST snapshot on reconnect. */ }
+        });
+        synchronizePresence();
         synchronize();
       },
-      onWebSocketClose: () => { if (!disposed) setStatus("Reconnecting"); },
+      onWebSocketClose: () => {
+        if (!disposed) {
+          setStatus("Reconnecting");
+          setMembers(previous => previous.map(member =>
+            member.name === currentUser ? { ...member, online: false } : member));
+        }
+      },
       onStompError: () => { if (!disposed) setStatus("Connection error"); },
     });
     syncNow.current = synchronize;
@@ -114,7 +155,7 @@ export default function ChatPage() {
       syncNow.current = () => {};
       client.deactivate();
     };
-  }, [roomId, connected]);
+  }, [roomId, currentUser, connected]);
 
   useEffect(() => {
     if (follow.current && box.current) box.current.scrollTop = box.current.scrollHeight;
@@ -182,15 +223,34 @@ export default function ChatPage() {
     <main className="chat-workspace">
       <aside className="chat-sidebar">
         <div className="chat-brand"><span>room</span><b>.</b></div>
+
         <div className="room-identity">
           <span className="room-icon"><FiHash /></span>
           <p>Current room</p>
           <h1>{roomId}</h1>
         </div>
-        <div className="user-card">
-          <span>{currentUser?.slice(0, 1)?.toUpperCase()}</span>
-          <div><small>Talking as</small><strong>{currentUser}</strong></div>
-        </div>
+
+        <section className="room-members" aria-label="Room members">
+          <div className="members-heading">
+            <span><FiUsers /> People</span>
+            <small>{onlineCount} online</small>
+          </div>
+          <div className="member-list">
+            {visibleMembers.map((member, index) => {
+              const isCurrent = member.name === currentUser;
+              return <div className="member-row" key={`${member.name}-${index}`} title={member.lastSeen ? `Last seen ${new Date(member.lastSeen).toLocaleString()}` : undefined}>
+                <span className="member-avatar">{member.name?.slice(0, 1)?.toUpperCase()}</span>
+                <div className="member-copy">
+                  <strong>{member.name}{isCurrent && <em> you</em>}</strong>
+                  <span className={member.online ? "member-online" : "member-offline"}>
+                    <i></i>{member.online ? "Online" : "Offline"}
+                  </span>
+                </div>
+              </div>;
+            })}
+          </div>
+        </section>
+
         <div className="sidebar-bottom">
           <span className={`connection-status status-${status.toLowerCase().replaceAll(" ", "-")}`}><FiWifi /> {status}</span>
           <button type="button" onClick={leave} className="leave-button"><FiArrowLeft /> Leave room</button>
@@ -200,10 +260,13 @@ export default function ChatPage() {
       <section className="conversation-panel">
         <header className="conversation-header">
           <div>
-            <p>LIVE CONVERSATION</p>
-            <h2><span>#</span>{roomId}</h2>
+            <p>CONVERSATION</p>
+            <h2>Messages</h2>
           </div>
-          <p className="conversation-caption">Messages are stored before they’re broadcast live.</p>
+          <div className="conversation-presence">
+            <span><i></i>{onlineCount} online</span>
+            <small>{visibleMembers.length} {visibleMembers.length === 1 ? "person" : "people"} seen</small>
+          </div>
         </header>
 
         {historyError && <p role="status" className="history-alert">{historyError}</p>}
