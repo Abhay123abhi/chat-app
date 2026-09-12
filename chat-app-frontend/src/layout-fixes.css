@@ -1,0 +1,419 @@
+/* Layout fixes: keep the app within the viewport and let only the lists scroll. */
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  overflow: hidden;
+}
+
+/* Join/create screen should fit one desktop viewport. */
+.entry-page {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.entry-visual,
+.entry-panel {
+  min-height: 0;
+  height: 100dvh;
+}
+
+.entry-visual {
+  padding: clamp(24px, 3.2vw, 50px);
+}
+
+.entry-hero-copy {
+  margin-top: clamp(38px, 6vh, 72px);
+}
+
+.entry-hero-copy h1 {
+  font-size: clamp(3.2rem, 5.8vw, 5.8rem);
+}
+
+.entry-hero-copy > p:last-child {
+  margin-top: 20px;
+  font-size: clamp(15px, 1.35vw, 19px);
+}
+
+.entry-demo {
+  height: clamp(135px, 19vh, 172px);
+  margin-top: auto;
+  margin-bottom: 20px;
+}
+
+.entry-panel {
+  padding: clamp(22px, 3vw, 42px);
+  overflow: hidden;
+}
+
+.entry-card {
+  max-height: calc(100dvh - 44px);
+  padding: clamp(24px, 3vw, 38px);
+}
+
+.entry-card h2 {
+  font-size: clamp(2.1rem, 3.3vw, 3.25rem);
+}
+
+.entry-description {
+  margin: 15px 0 22px;
+}
+
+.entry-field {
+  margin-top: 14px;
+}
+
+.entry-field input {
+  height: 48px;
+}
+
+.entry-primary {
+  min-height: 50px;
+  margin-top: 22px;
+}
+
+.entry-secondary {
+  min-height: 48px;
+  margin-top: 10px;
+}
+
+.entry-note {
+  margin-top: 16px;
+}
+
+/* Chat fills the viewport. Header/composer/sidebar do not move. */
+.chat-workspace {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-columns: 292px minmax(0, 1fr);
+}
+
+.chat-sidebar {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding: 22px 20px 18px;
+}
+
+.chat-brand {
+  flex: 0 0 auto;
+  font-size: 21px;
+}
+
+.room-identity {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+.room-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  margin: 0;
+  border-radius: 10px;
+}
+
+.room-copy {
+  min-width: 0;
+}
+
+.room-identity p {
+  margin: 0 0 3px;
+  font-size: 9px;
+  letter-spacing: .14em;
+}
+
+.room-identity h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-members {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: 0;
+  overflow: hidden;
+}
+
+.members-heading {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+}
+
+.member-list {
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+  display: block;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.member-group + .member-group {
+  margin-top: 14px;
+}
+
+.member-group-label {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 6px;
+  padding: 5px 3px;
+  background: #1d399f;
+  color: #9fb1ef;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.member-group-label b {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.member-row {
+  margin-bottom: 6px;
+  padding: 8px 9px;
+  border-radius: 10px;
+}
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  border-radius: 10px;
+}
+
+.member-copy strong {
+  font-size: 12px;
+}
+
+.sidebar-bottom {
+  flex: 0 0 auto;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.leave-button {
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+/* Main panel: only messages scroll. */
+.conversation-panel {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.conversation-header {
+  min-height: 58px;
+  padding: 10px clamp(18px, 3vw, 38px);
+}
+
+.conversation-header > div > p {
+  margin: 0 0 2px;
+  font-size: 8px;
+  letter-spacing: .13em;
+}
+
+.conversation-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.1;
+}
+
+.conversation-presence {
+  gap: 1px;
+}
+
+.conversation-presence > span {
+  font-size: 10px;
+}
+
+.conversation-presence small {
+  font-size: 9px;
+}
+
+.message-stream {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px clamp(18px, 3vw, 38px) 22px;
+}
+
+.message-row {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.message-content {
+  max-width: min(68%, 620px);
+}
+
+/* Composer stays visible at the bottom and is intentionally compact. */
+.composer {
+  position: relative;
+  z-index: 5;
+  flex: 0 0 auto;
+  padding: 9px clamp(18px, 3vw, 38px) 10px;
+  border-top: 1px solid rgba(23,25,31,.11);
+  background: rgba(255,250,241,.98);
+  box-shadow: 0 -8px 24px rgba(50,44,34,.035);
+}
+
+.composer-inner {
+  width: min(100%, 860px);
+  gap: 9px;
+}
+
+.composer textarea {
+  height: 44px;
+  min-height: 44px;
+  max-height: 96px;
+  padding: 10px 13px;
+  border-radius: 12px;
+  line-height: 1.35;
+}
+
+.send-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.new-message-button {
+  bottom: 72px;
+}
+
+@media (max-height: 760px) and (min-width: 901px) {
+  .entry-visual {
+    padding-block: 24px;
+  }
+
+  .entry-hero-copy {
+    margin-top: 28px;
+  }
+
+  .entry-hero-copy h1 {
+    font-size: clamp(3rem, 5vw, 4.8rem);
+  }
+
+  .entry-demo {
+    height: 120px;
+    margin-bottom: 12px;
+  }
+
+  .entry-features {
+    font-size: 10px;
+  }
+
+  .entry-card {
+    padding: 24px 30px;
+  }
+
+  .entry-card h2 {
+    font-size: 2.35rem;
+  }
+}
+
+@media (max-width: 900px) {
+  body {
+    overflow: auto;
+  }
+
+  .entry-page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .entry-visual,
+  .entry-panel {
+    height: auto;
+  }
+
+  .entry-card {
+    max-height: none;
+  }
+
+  .chat-workspace {
+    grid-template-columns: 92px minmax(0, 1fr);
+  }
+
+  .room-identity {
+    justify-content: center;
+    margin-top: 22px;
+    border-bottom: 0;
+  }
+
+  .room-copy,
+  .member-group-label {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    overflow: hidden;
+  }
+
+  .chat-workspace {
+    display: block;
+    height: 100dvh;
+  }
+
+  .chat-sidebar {
+    height: 58px;
+    padding: 8px 12px;
+  }
+
+  .conversation-panel {
+    height: calc(100dvh - 58px);
+  }
+
+  .conversation-header {
+    min-height: 52px;
+    padding: 9px 14px;
+  }
+
+  .message-stream {
+    padding: 14px 12px 18px;
+  }
+
+  .message-content {
+    max-width: 86%;
+  }
+
+  .composer {
+    padding: 8px 10px 9px;
+  }
+}
