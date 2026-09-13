@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import "./premium-presence.css";
 import "./layout-fixes.css";
+import "./live-entry-animation.css";
 import { BrowserRouter } from "react-router";
 import AppRoutes from "./config/Routes.jsx";
 import { Toaster } from "react-hot-toast";

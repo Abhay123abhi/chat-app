@@ -1,0 +1,253 @@
+/* Entry demo motion: messages travel into the room instead of decorative floating shapes. */
+
+.entry-demo {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.demo-grid {
+  z-index: 0;
+}
+
+.demo-bubble,
+.demo-signal,
+.traffic-message,
+.typing-packet,
+.message-counter {
+  z-index: 2;
+}
+
+.demo-bubble-a {
+  animation: anchorMessageA 6.4s ease-in-out infinite;
+}
+
+.demo-bubble-b {
+  animation: anchorMessageB 6.8s ease-in-out infinite;
+}
+
+.demo-signal {
+  box-shadow: 0 0 0 0 rgba(124,255,156,.22);
+  animation: liveSignalPulse 2.2s ease-in-out infinite;
+}
+
+.demo-signal i {
+  box-shadow: 0 0 0 0 rgba(124,255,156,.5);
+  animation: liveDotPulse 1.55s ease-out infinite;
+}
+
+.demo-traffic-line {
+  position: absolute;
+  z-index: 1;
+  height: 1px;
+  opacity: .35;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
+  pointer-events: none;
+}
+
+.traffic-line-a {
+  width: 58%;
+  left: -4%;
+  top: 46%;
+  transform: rotate(5deg);
+}
+
+.traffic-line-b {
+  width: 52%;
+  right: -3%;
+  bottom: 26%;
+  transform: rotate(-7deg);
+}
+
+.traffic-message {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: max-content;
+  padding: 8px 10px;
+  border: 1px solid rgba(23,23,23,.88);
+  color: #171717;
+  box-shadow: 4px 4px 0 rgba(8,21,74,.25);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.traffic-message span,
+.typing-packet > span {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  border-radius: 50%;
+  background: #171717;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 850;
+}
+
+.traffic-message p {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.traffic-message-a {
+  left: 42%;
+  top: 22%;
+  background: #fff7e8;
+  animation: messageFlyFromLeft 9s cubic-bezier(.2,.72,.22,1) infinite;
+}
+
+.traffic-message-b {
+  right: 22%;
+  top: 47%;
+  background: #ffd66b;
+  animation: messageFlyFromRight 9s cubic-bezier(.2,.72,.22,1) 2.1s infinite;
+}
+
+.traffic-message-c {
+  left: 34%;
+  bottom: 14%;
+  background: #ff8a54;
+  animation: messageFlyFromBottom 9s cubic-bezier(.2,.72,.22,1) 4.2s infinite;
+}
+
+.traffic-message-d {
+  right: 8%;
+  top: 30%;
+  background: #dbe5ff;
+  animation: messageFlyFromTop 9s cubic-bezier(.2,.72,.22,1) 6.25s infinite;
+}
+
+.typing-packet {
+  position: absolute;
+  left: 46%;
+  top: 42%;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,.35);
+  background: rgba(17,44,145,.88);
+  box-shadow: 4px 4px 0 rgba(8,21,74,.22);
+  animation: typingPacket 7.2s ease-in-out infinite;
+}
+
+.typing-packet i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #d8e2ff;
+  animation: typingDots 1.05s ease-in-out infinite;
+}
+
+.typing-packet i:nth-of-type(2) { animation-delay: .14s; }
+.typing-packet i:nth-of-type(3) { animation-delay: .28s; }
+
+.message-counter {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  color: #cbd7ff;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: 8px;
+  opacity: .72;
+}
+
+.message-counter strong {
+  color: #ffb332;
+  font-size: 14px;
+  letter-spacing: -.02em;
+  animation: counterPop 4.5s ease-in-out infinite;
+}
+
+@keyframes messageFlyFromLeft {
+  0%, 7% { opacity: 0; transform: translate(-185px, 22px) rotate(-5deg) scale(.9); }
+  13%, 28% { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); }
+  36%, 100% { opacity: 0; transform: translate(52px, -8px) scale(.97); }
+}
+
+@keyframes messageFlyFromRight {
+  0%, 7% { opacity: 0; transform: translate(185px, -14px) rotate(5deg) scale(.9); }
+  13%, 28% { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); }
+  36%, 100% { opacity: 0; transform: translate(-48px, 8px) scale(.97); }
+}
+
+@keyframes messageFlyFromBottom {
+  0%, 7% { opacity: 0; transform: translate(36px, 105px) rotate(4deg) scale(.9); }
+  13%, 28% { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); }
+  36%, 100% { opacity: 0; transform: translate(-22px, -28px) scale(.97); }
+}
+
+@keyframes messageFlyFromTop {
+  0%, 7% { opacity: 0; transform: translate(-18px, -90px) rotate(-4deg) scale(.9); }
+  13%, 28% { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); }
+  36%, 100% { opacity: 0; transform: translate(-42px, 22px) scale(.97); }
+}
+
+@keyframes anchorMessageA {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes anchorMessageB {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+@keyframes typingPacket {
+  0%, 12%, 76%, 100% { opacity: 0; transform: translateY(8px) scale(.94); }
+  19%, 62% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes typingDots {
+  0%, 70%, 100% { transform: translateY(0); opacity: .4; }
+  35% { transform: translateY(-3px); opacity: 1; }
+}
+
+@keyframes liveSignalPulse {
+  0%, 100% { transform: translateY(0); box-shadow: 0 0 0 0 rgba(124,255,156,.12); }
+  50% { transform: translateY(-1px); box-shadow: 0 0 0 7px rgba(124,255,156,0); }
+}
+
+@keyframes liveDotPulse {
+  0% { box-shadow: 0 0 0 0 rgba(124,255,156,.55); }
+  100% { box-shadow: 0 0 0 8px rgba(124,255,156,0); }
+}
+
+@keyframes counterPop {
+  0%, 72%, 100% { transform: scale(1); }
+  80% { transform: scale(1.16); }
+}
+
+@media (max-width: 900px) {
+  .traffic-message-c,
+  .traffic-message-d,
+  .message-counter,
+  .demo-traffic-line {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-bubble,
+  .demo-signal,
+  .demo-signal i,
+  .traffic-message,
+  .typing-packet,
+  .typing-packet i,
+  .message-counter strong {
+    animation: none !important;
+  }
+
+  .traffic-message,
+  .typing-packet {
+    display: none;
+  }
+}
