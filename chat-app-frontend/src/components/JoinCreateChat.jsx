@@ -90,9 +90,24 @@ const JoinCreateChat = () => {
 
         <div className="entry-demo" aria-hidden="true">
           <div className="demo-grid"></div>
+          <div className="demo-traffic-line traffic-line-a"></div>
+          <div className="demo-traffic-line traffic-line-b"></div>
+
           <div className="demo-bubble demo-bubble-a"><span>AJ</span><p>Shipping the fix now.</p></div>
           <div className="demo-bubble demo-bubble-b"><span>RK</span><p>Got it — I’m in the room.</p></div>
+
+          <div className="traffic-message traffic-message-a"><span>NM</span><p>Deploy is green ✓</p></div>
+          <div className="traffic-message traffic-message-b"><span>SK</span><p>Joining now.</p></div>
+          <div className="traffic-message traffic-message-c"><span>DV</span><p>Looks good to me.</p></div>
+          <div className="traffic-message traffic-message-d"><span>PM</span><p>One sec…</p></div>
+
+          <div className="typing-packet">
+            <span>TS</span>
+            <i></i><i></i><i></i>
+          </div>
+
           <div className="demo-signal"><i></i><span>live</span></div>
+          <div className="message-counter"><strong>+4</strong><span>messages</span></div>
         </div>
 
         <div className="entry-features" aria-label="Highlights">
