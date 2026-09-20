@@ -1,5 +1,6 @@
 package com.substring.chat.services;
 
+import com.substring.chat.config.ChatProperties;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -11,22 +12,38 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PresenceService {
+    private final ChatProperties properties;
     private final ConcurrentHashMap<String, SessionPresence> sessions = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, MemberState>> rooms = new ConcurrentHashMap<>();
 
+    public PresenceService(ChatProperties properties) {
+        this.properties = properties;
+    }
+
     public void connect(String sessionId, String roomId, String displayName) {
-        if (sessionId == null || sessionId.isBlank()) return;
+        if (sessionId == null || sessionId.isBlank()) throw new IllegalArgumentException("Session is required");
         String name = validDisplayName(displayName);
 
         disconnect(sessionId);
-        sessions.put(sessionId, new SessionPresence(roomId, name));
-
-        ConcurrentHashMap<String, MemberState> members = rooms.computeIfAbsent(roomId, ignored -> new ConcurrentHashMap<>());
+        ConcurrentHashMap<String, MemberState> members =
+                rooms.computeIfAbsent(roomId, ignored -> new ConcurrentHashMap<>());
         String memberKey = name.toLowerCase(Locale.ROOT);
-        MemberState member = members.computeIfAbsent(memberKey, ignored -> new MemberState(name));
-        member.displayName = name;
-        member.sessions.add(sessionId);
-        member.lastSeen = Instant.now();
+
+        synchronized (members) {
+            MemberState member = members.get(memberKey);
+            boolean becomingActive = member == null || member.sessions.isEmpty();
+            if (becomingActive && activeCount(members) >= Math.max(1, properties.getMaxActiveUsersPerRoom())) {
+                throw new IllegalStateException("Room active-user limit reached");
+            }
+            if (member == null) {
+                member = new MemberState(name);
+                members.put(memberKey, member);
+            }
+            member.displayName = name;
+            member.sessions.add(sessionId);
+            member.lastSeen = Instant.now();
+            sessions.put(sessionId, new SessionPresence(roomId, name));
+        }
     }
 
     public String disconnect(String sessionId) {
@@ -37,12 +54,19 @@ public class PresenceService {
         ConcurrentHashMap<String, MemberState> members = rooms.get(session.roomId());
         if (members == null) return session.roomId();
 
-        MemberState member = members.get(session.displayName().toLowerCase(Locale.ROOT));
-        if (member != null) {
-            member.sessions.remove(sessionId);
-            member.lastSeen = Instant.now();
+        synchronized (members) {
+            MemberState member = members.get(session.displayName().toLowerCase(Locale.ROOT));
+            if (member != null) {
+                member.sessions.remove(sessionId);
+                member.lastSeen = Instant.now();
+            }
         }
         return session.roomId();
+    }
+
+    public String roomForSession(String sessionId) {
+        SessionPresence session = sessionId == null ? null : sessions.get(sessionId);
+        return session == null ? null : session.roomId();
     }
 
     public PresenceSnapshot snapshot(String roomId) {
@@ -57,6 +81,10 @@ public class PresenceService {
         result.sort(Comparator.comparing(MemberPresence::online).reversed()
                 .thenComparing(MemberPresence::name, String.CASE_INSENSITIVE_ORDER));
         return new PresenceSnapshot(roomId, result);
+    }
+
+    private static long activeCount(ConcurrentHashMap<String, MemberState> members) {
+        return members.values().stream().filter(member -> !member.sessions.isEmpty()).count();
     }
 
     private static String validDisplayName(String displayName) {

@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
@@ -23,4 +24,6 @@ public class Message {
     private String sender;
     private String content;
     private Instant timeStamp;
+    @Indexed(name = "message_expiry", expireAfter = "0s")
+    private Instant expiresAt;
 }

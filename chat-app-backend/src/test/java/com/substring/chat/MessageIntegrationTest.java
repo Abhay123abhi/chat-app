@@ -1,5 +1,6 @@
 package com.substring.chat;
 
+import com.substring.chat.config.ChatProperties;
 import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
 import com.substring.chat.playload.MessageRequest;
@@ -28,24 +29,35 @@ class MessageIntegrationTest {
             MongoTemplate mongo = new MongoTemplate(client, "chat_test");
             mongo.dropCollection(Message.class);
             mongo.dropCollection(Room.class);
-            mongo.indexOps(Message.class).ensureIndex(new Index().on("roomId", Direction.ASC).on("sequence", Direction.ASC).unique());
-            mongo.indexOps(Message.class).ensureIndex(new Index().on("roomId", Direction.ASC).on("clientMessageId", Direction.ASC).unique());
+            mongo.indexOps(Message.class).ensureIndex(
+                    new Index().on("roomId", Direction.ASC).on("sequence", Direction.ASC).unique());
+            mongo.indexOps(Message.class).ensureIndex(
+                    new Index().on("roomId", Direction.ASC).on("clientMessageId", Direction.ASC).unique());
+
             Room room = new Room();
             room.setRoomId("concurrent");
             mongo.insert(room);
-            MessageService service = new MessageService(mongo);
+
+            ChatProperties properties = new ChatProperties();
+            MessageService service = new MessageService(mongo, properties);
             ExecutorService executor = Executors.newFixedThreadPool(12);
             try {
                 List<Callable<Message>> work = new ArrayList<>();
                 for (int i = 0; i < 100; i++) {
                     int id = i;
-                    work.add(() -> service.save("concurrent", new MessageRequest("key-" + id, "Guest", "message " + id)));
+                    work.add(() -> service.save("concurrent",
+                            new MessageRequest("key-" + id, "Guest", "message " + id)));
                 }
                 for (Future<Message> future : executor.invokeAll(work)) future.get(20, TimeUnit.SECONDS);
+
                 List<Callable<Message>> retries = new ArrayList<>();
-                for (int i = 0; i < 20; i++) retries.add(() -> service.save("concurrent", new MessageRequest("key-0", "Guest", "message 0")));
+                for (int i = 0; i < 20; i++) {
+                    retries.add(() -> service.save("concurrent",
+                            new MessageRequest("key-0", "Guest", "message 0")));
+                }
                 var results = new HashSet<String>();
                 for (Future<Message> future : executor.invokeAll(retries)) results.add(future.get().getId());
+
                 assertEquals(1, results.size());
                 assertEquals(100, mongo.getCollection("messages").countDocuments());
                 var recovered = service.history("concurrent", null, 0L, 60);
@@ -55,7 +67,9 @@ class MessageIntegrationTest {
                 assertEquals(40, rest.messages().size());
                 assertFalse(rest.hasMore());
                 assertTrue(rest.messages().get(0).getSequence() > recovered.nextCursor());
-            } finally { executor.shutdownNow(); }
+            } finally {
+                executor.shutdownNow();
+            }
         }
     }
 }

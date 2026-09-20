@@ -1,5 +1,6 @@
 package com.substring.chat;
 
+import com.substring.chat.config.ChatProperties;
 import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
 import com.substring.chat.playload.MessageRequest;
@@ -19,11 +20,13 @@ import static org.mockito.Mockito.*;
 class ChatAppBackendApplicationTests {
     private MongoTemplate mongo;
     private MessageService service;
+    private ChatProperties properties;
 
     @BeforeEach
     void setup() {
         mongo = mock(MongoTemplate.class);
-        service = new MessageService(mongo);
+        properties = new ChatProperties();
+        service = new MessageService(mongo, properties);
     }
 
     @Test
@@ -34,7 +37,8 @@ class ChatAppBackendApplicationTests {
         when(mongo.findOne(any(Query.class), eq(Message.class))).thenReturn(original);
         assertSame(original, service.save("room", new MessageRequest("retry-key", "Abhay", "hello")));
         verify(mongo, never()).insert(any(Message.class));
-        verify(mongo, never()).findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), eq(Room.class));
+        verify(mongo, never()).findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), eq(Room.class));
     }
 
     @Test
@@ -44,16 +48,32 @@ class ChatAppBackendApplicationTests {
         original.setContent("first");
         when(mongo.findOne(any(Query.class), eq(Message.class))).thenReturn(original);
         assertEquals(409, assertThrows(ResponseStatusException.class,
-                () -> service.save("room", new MessageRequest("same-key", "Abhay", "different"))).getStatusCode().value());
+                () -> service.save("room", new MessageRequest("same-key", "Abhay", "different")))
+                .getStatusCode().value());
     }
 
     @Test
     void invalidInputDoesNotTouchDatabase() {
-        assertThrows(ResponseStatusException.class, () -> service.save("bad/room", new MessageRequest("key", "A", "hello")));
-        assertThrows(ResponseStatusException.class, () -> service.save("room", new MessageRequest("key", "A", " ")));
+        assertThrows(ResponseStatusException.class,
+                () -> service.save("bad/room", new MessageRequest("key", "A", "hello")));
+        assertThrows(ResponseStatusException.class,
+                () -> service.save("room", new MessageRequest("key", "A", " ")));
         assertThrows(ResponseStatusException.class, () -> service.history("room", 5L, 2L, 50));
         assertThrows(ResponseStatusException.class, () -> service.history("room", null, null, 101));
         verifyNoInteractions(mongo);
+    }
+
+    @Test
+    void roomQuotaReturnsConflict() {
+        when(mongo.findOne(any(Query.class), eq(Message.class))).thenReturn(null);
+        when(mongo.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), eq(Room.class)))
+                .thenReturn(null);
+        when(mongo.exists(any(Query.class), eq(Room.class))).thenReturn(true);
+        properties.setMaxMessagesPerRoom(2);
+
+        assertEquals(409, assertThrows(ResponseStatusException.class,
+                () -> service.save("room", new MessageRequest("key", "A", "hello")))
+                .getStatusCode().value());
     }
 
     @Test
