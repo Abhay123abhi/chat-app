@@ -25,7 +25,7 @@ Spring Boot
    v
 MongoDB
 
-Spring Boot -- STOMP/WebSocket --> connected room members
+Spring Boot -- STOMP/SockJS at /ws-chat --> connected room members
 ```
 
 Messages are written through the REST API first. After MongoDB stores a message, the backend publishes it to the room over STOMP. If a client reconnects, it loads message history again and merges anything it missed.
@@ -85,7 +85,7 @@ Then open the Vite URL, normally `http://localhost:5173`.
 ## Main flow
 
 1. Create or join a room.
-2. The browser connects to `/chat` using STOMP/SockJS.
+2. The browser connects to `/ws-chat` using STOMP/SockJS.
 3. Sending a message calls `POST /api/v1/rooms/{roomId}/messages`.
 4. The backend stores the message in MongoDB.
 5. The saved message is published to `/topic/room/{roomId}`.
@@ -122,3 +122,8 @@ npm run build
 ## Current scope
 
 This is a guest-room, not a private messaging platform. Room IDs are not access control, users are not authenticated, and presence is kept in memory for the current backend instance.
+
+
+## Public deployment
+
+For the free-tier Render + MongoDB Atlas deployment, production limits, kill switches and verification steps, see [DEPLOYMENT.md](DEPLOYMENT.md).

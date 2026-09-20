@@ -127,7 +127,7 @@ export default function ChatPage() {
     }
 
     const client = new Client({
-      webSocketFactory: () => new SockJS("/chat"),
+      webSocketFactory: () => new SockJS("/ws-chat"),
       connectHeaders: { roomId, displayName: currentUser },
       reconnectDelay: 3000,
       heartbeatIncoming: 10000,

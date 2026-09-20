@@ -1,13 +1,12 @@
 package com.substring.chat.config;
 
+import com.substring.chat.security.AbuseProtectionService;
 import com.substring.chat.services.PresenceService;
-import com.substring.chat.validation.ChatValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
@@ -16,33 +15,21 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 public class PresenceEventListener {
     private final PresenceService presence;
     private final SimpMessagingTemplate broker;
+    private final AbuseProtectionService protection;
 
     @EventListener
     public void connected(SessionConnectEvent event) {
         var headers = StompHeaderAccessor.wrap(event.getMessage());
-        var sessionId = headers.getSessionId();
-        var roomId = headers.getFirstNativeHeader("roomId");
-        var displayName = headers.getFirstNativeHeader("displayName");
-
-        if (sessionId == null || roomId == null || displayName == null) {
-            return;
-        }
-
-        try {
-            ChatValidation.validRoomId(roomId);
-            presence.connect(sessionId, roomId, displayName);
-            publish(roomId);
-        } catch (IllegalArgumentException | ResponseStatusException ignored) {
-            // Invalid presence metadata must not bring down the WebSocket broker.
-        }
+        var roomId = presence.roomForSession(headers.getSessionId());
+        if (roomId != null) publish(roomId);
     }
 
     @EventListener
     public void disconnected(SessionDisconnectEvent event) {
-        var roomId = presence.disconnect(event.getSessionId());
-        if (roomId != null) {
-            publish(roomId);
-        }
+        var sessionId = event.getSessionId();
+        var roomId = presence.disconnect(sessionId);
+        protection.closeWebSocket(sessionId);
+        if (roomId != null) publish(roomId);
     }
 
     private void publish(String roomId) {
