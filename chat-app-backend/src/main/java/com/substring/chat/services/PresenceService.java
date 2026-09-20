@@ -1,7 +1,8 @@
 package com.substring.chat.services;
 
+import com.substring.chat.dto.MemberPresence;
+import com.substring.chat.dto.PresenceSnapshot;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -15,47 +16,62 @@ public class PresenceService {
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, MemberState>> rooms = new ConcurrentHashMap<>();
 
     public void connect(String sessionId, String roomId, String displayName) {
-        if (sessionId == null || sessionId.isBlank()) return;
-        String name = validDisplayName(displayName);
+        if (sessionId == null || sessionId.isBlank()) {
+            return;
+        }
 
+        var name = validDisplayName(displayName);
         disconnect(sessionId);
         sessions.put(sessionId, new SessionPresence(roomId, name));
 
-        ConcurrentHashMap<String, MemberState> members = rooms.computeIfAbsent(roomId, ignored -> new ConcurrentHashMap<>());
-        String memberKey = name.toLowerCase(Locale.ROOT);
-        MemberState member = members.computeIfAbsent(memberKey, ignored -> new MemberState(name));
+        var members = rooms.computeIfAbsent(roomId, ignored -> new ConcurrentHashMap<>());
+        var memberKey = name.toLowerCase(Locale.ROOT);
+        var member = members.computeIfAbsent(memberKey, ignored -> new MemberState(name));
+
         member.displayName = name;
         member.sessions.add(sessionId);
         member.lastSeen = Instant.now();
     }
 
     public String disconnect(String sessionId) {
-        if (sessionId == null) return null;
-        SessionPresence session = sessions.remove(sessionId);
-        if (session == null) return null;
+        if (sessionId == null) {
+            return null;
+        }
 
-        ConcurrentHashMap<String, MemberState> members = rooms.get(session.roomId());
-        if (members == null) return session.roomId();
+        var session = sessions.remove(sessionId);
+        if (session == null) {
+            return null;
+        }
 
-        MemberState member = members.get(session.displayName().toLowerCase(Locale.ROOT));
+        var members = rooms.get(session.roomId());
+        if (members == null) {
+            return session.roomId();
+        }
+
+        var member = members.get(session.displayName().toLowerCase(Locale.ROOT));
         if (member != null) {
             member.sessions.remove(sessionId);
             member.lastSeen = Instant.now();
         }
+
         return session.roomId();
     }
 
     public PresenceSnapshot snapshot(String roomId) {
-        ConcurrentHashMap<String, MemberState> members = rooms.get(roomId);
-        if (members == null) return new PresenceSnapshot(roomId, List.of());
+        var members = rooms.get(roomId);
+        if (members == null) {
+            return new PresenceSnapshot(roomId, List.of());
+        }
 
-        List<MemberPresence> result = new ArrayList<>();
-        members.values().forEach(member -> result.add(new MemberPresence(
-                member.displayName,
-                !member.sessions.isEmpty(),
-                member.lastSeen)));
-        result.sort(Comparator.comparing(MemberPresence::online).reversed()
-                .thenComparing(MemberPresence::name, String.CASE_INSENSITIVE_ORDER));
+        var result = members.values().stream()
+                .map(member -> new MemberPresence(
+                        member.displayName,
+                        !member.sessions.isEmpty(),
+                        member.lastSeen))
+                .sorted(Comparator.comparing(MemberPresence::online).reversed()
+                        .thenComparing(MemberPresence::name, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
         return new PresenceSnapshot(roomId, result);
     }
 
@@ -66,7 +82,8 @@ public class PresenceService {
         return displayName.trim();
     }
 
-    private record SessionPresence(String roomId, String displayName) {}
+    private record SessionPresence(String roomId, String displayName) {
+    }
 
     private static final class MemberState {
         private volatile String displayName;
@@ -77,7 +94,4 @@ public class PresenceService {
             this.displayName = displayName;
         }
     }
-
-    public record MemberPresence(String name, boolean online, Instant lastSeen) {}
-    public record PresenceSnapshot(String roomId, List<MemberPresence> members) {}
 }
