@@ -618,3 +618,94 @@ body {
     padding-inline: 16px;
   }
 }
+
+
+/* Mobile entry-page fix: keep the join/create form fully reachable on iOS/Safari. */
+@media (max-width: 600px) {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    height: auto;
+  }
+
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .entry-page {
+    display: block;
+    width: 100%;
+    min-height: 100svh;
+    height: auto;
+    overflow: visible;
+  }
+
+  .entry-visual,
+  .entry-panel {
+    width: 100%;
+    min-height: 0;
+    height: auto;
+  }
+
+  .entry-visual {
+    padding-top: calc(18px + env(safe-area-inset-top));
+    padding-bottom: 24px;
+  }
+
+  .entry-hero-copy {
+    margin-top: 30px;
+  }
+
+  .entry-hero-copy > p:last-child {
+    margin-bottom: 0;
+  }
+
+  .entry-demo {
+    height: 150px;
+    margin-top: 24px;
+    margin-bottom: 18px;
+  }
+
+  .entry-features {
+    margin-top: 16px;
+  }
+
+  .entry-panel {
+    display: block;
+    padding-top: 26px;
+    padding-bottom: calc(34px + env(safe-area-inset-bottom));
+  }
+
+  .entry-card {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .entry-note {
+    margin-bottom: 0;
+  }
+
+  /* Chat workspace still owns the viewport; entry-page scrolling should not affect it. */
+  .chat-workspace {
+    height: 100dvh;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 430px) {
+  .entry-hero-copy {
+    margin-top: 26px;
+  }
+
+  .entry-demo {
+    height: 142px;
+    margin-top: 20px;
+  }
+
+  .entry-panel {
+    padding-top: 22px;
+  }
+}
