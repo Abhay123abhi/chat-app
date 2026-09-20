@@ -1,6 +1,7 @@
 package com.substring.chat;
 
 import com.mongodb.client.MongoClients;
+import com.substring.chat.config.ChatProperties;
 import com.substring.chat.dto.MessageRequest;
 import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
@@ -8,11 +9,7 @@ import com.substring.chat.services.MessageService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -21,9 +18,7 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers(disabledWithoutDocker = true)
 class MessageIntegrationTest {
@@ -45,33 +40,25 @@ class MessageIntegrationTest {
             room.setRoomId("concurrent");
             mongo.insert(room);
 
-            var service = new MessageService(mongo);
+            var service = new MessageService(mongo, new ChatProperties());
             ExecutorService executor = Executors.newFixedThreadPool(12);
-
             try {
                 List<Callable<Message>> work = new ArrayList<>();
                 for (int i = 0; i < 100; i++) {
                     int id = i;
-                    work.add(() -> service.save(
-                            "concurrent",
+                    work.add(() -> service.save("concurrent",
                             new MessageRequest("key-" + id, "Guest", "message " + id)));
                 }
-
-                for (Future<Message> future : executor.invokeAll(work)) {
-                    future.get(20, TimeUnit.SECONDS);
-                }
+                for (Future<Message> future : executor.invokeAll(work)) future.get(20, TimeUnit.SECONDS);
 
                 List<Callable<Message>> retries = new ArrayList<>();
                 for (int i = 0; i < 20; i++) {
-                    retries.add(() -> service.save(
-                            "concurrent",
+                    retries.add(() -> service.save("concurrent",
                             new MessageRequest("key-0", "Guest", "message 0")));
                 }
 
                 var results = new HashSet<String>();
-                for (Future<Message> future : executor.invokeAll(retries)) {
-                    results.add(future.get().getId());
-                }
+                for (Future<Message> future : executor.invokeAll(retries)) results.add(future.get().getId());
 
                 assertEquals(1, results.size());
                 assertEquals(100, mongo.getCollection("messages").countDocuments());

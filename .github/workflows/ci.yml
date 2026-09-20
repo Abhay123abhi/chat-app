@@ -50,11 +50,15 @@ jobs:
             fi
             sleep 2
           done
-          curl -fsS -H 'Content-Type: application/json' \
-            --data '{"clientMessageId":"ci-1","sender":"CI","content":"hello"}' \
-            http://localhost:3000/api/v1/rooms/ci-room/messages
+          curl -fsS -H 'Content-Type: application/json'             --data '{"clientMessageId":"ci-1","sender":"CI","content":"hello"}'             http://localhost:3000/api/v1/rooms/ci-room/messages
           curl -fsS 'http://localhost:3000/api/v1/rooms/ci-room/messages?limit=10'
       - if: always()
         run: docker compose logs --tail=100
       - if: always()
         run: docker compose down
+
+  production-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f Dockerfile.render -t room-chat-render .

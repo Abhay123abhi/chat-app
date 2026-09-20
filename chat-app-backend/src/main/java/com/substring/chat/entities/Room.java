@@ -1,5 +1,6 @@
 package com.substring.chat.entities;
 
+import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
@@ -13,4 +14,9 @@ public class Room {
     @Id private String id;
     @Indexed(unique = true) private String roomId;
     private long nextSequence;
+    private long messageCount;
+    private Instant createdAt;
+    private Instant lastActivityAt;
+    @Indexed(name = "room_expiry", expireAfter = "0s")
+    private Instant expiresAt;
 }

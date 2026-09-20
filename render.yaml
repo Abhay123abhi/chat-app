@@ -1,0 +1,71 @@
+services:
+  - type: web
+    name: room-chat
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    maxShutdownDelaySeconds: 20
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SPRING_DATA_MONGODB_URI
+        sync: false
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:InitialRAMPercentage=10 -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError
+      - key: CHAT_ENABLED
+        value: "true"
+      - key: ROOM_CREATION_ENABLED
+        value: "true"
+      - key: TRUSTED_CLIENT_IP_HEADER
+        value: X-Forwarded-For
+      - key: REQUEST_RATE_LIMIT_PER_MINUTE
+        value: "60"
+      - key: GLOBAL_REQUEST_RATE_LIMIT_PER_MINUTE
+        value: "300"
+      - key: MESSAGE_RATE_LIMIT_PER_MINUTE
+        value: "20"
+      - key: GLOBAL_MESSAGE_RATE_LIMIT_PER_MINUTE
+        value: "60"
+      - key: MESSAGE_BURST_LIMIT
+        value: "4"
+      - key: MESSAGE_BURST_WINDOW_SECONDS
+        value: "5"
+      - key: ROOM_CREATION_RATE_LIMIT_PER_HOUR
+        value: "3"
+      - key: GLOBAL_ROOM_CREATION_RATE_LIMIT_PER_HOUR
+        value: "10"
+      - key: MAX_MESSAGE_LENGTH
+        value: "4000"
+      - key: MAX_MESSAGES_PER_ROOM
+        value: "1000"
+      - key: MAX_ACTIVE_ROOMS
+        value: "25"
+      - key: MAX_ACTIVE_USERS_PER_ROOM
+        value: "20"
+      - key: MAX_PRESENCE_MEMBERS_PER_ROOM
+        value: "30"
+      - key: MAX_WEBSOCKET_CONNECTIONS_PER_IP
+        value: "5"
+      - key: MAX_WEBSOCKET_CONNECTIONS_PER_ROOM
+        value: "22"
+      - key: MAX_WEBSOCKET_CONNECTIONS_GLOBAL
+        value: "50"
+      - key: MESSAGE_RETENTION_DAYS
+        value: "7"
+      - key: ROOM_INACTIVITY_DAYS
+        value: "7"
+      - key: DEFAULT_HISTORY_PAGE_SIZE
+        value: "50"
+      - key: MAX_HISTORY_PAGE_SIZE
+        value: "100"
+      - key: SERVER_TOMCAT_THREADS_MAX
+        value: "40"
+      - key: SERVER_TOMCAT_THREADS_MIN_SPARE
+        value: "4"
+      - key: SERVER_TOMCAT_MAX_CONNECTIONS
+        value: "100"
+      - key: SERVER_TOMCAT_ACCEPT_COUNT
+        value: "50"
