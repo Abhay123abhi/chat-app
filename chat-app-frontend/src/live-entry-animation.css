@@ -200,14 +200,114 @@
   100% { box-shadow: 0 0 0 8px rgba(124,255,156,0); }
 }
 
-  80% { transform: scale(1.16); }
-}
-
 @media (max-width: 900px) {
   .traffic-message-c,
   .traffic-message-d,
   .demo-traffic-line {
     display: none;
+  }
+
+  .traffic-message-a {
+    left: 34%;
+    top: 20%;
+  }
+
+  .traffic-message-b {
+    right: 12%;
+    top: 52%;
+  }
+
+  .typing-packet {
+    left: 42%;
+    top: 45%;
+  }
+}
+
+@media (max-width: 600px) {
+  .demo-bubble-a {
+    left: 14px;
+    top: 20px;
+    max-width: 78%;
+  }
+
+  .demo-bubble-b {
+    right: 14px;
+    bottom: 18px;
+    max-width: 80%;
+  }
+
+  .demo-bubble {
+    gap: 8px;
+    padding: 9px 10px;
+    font-size: 12px;
+    box-shadow: 4px 4px 0 rgba(9,22,76,.22);
+  }
+
+  .demo-bubble span {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
+    font-size: 9px;
+  }
+
+  .traffic-message-a {
+    left: 18%;
+    top: 44%;
+    transform-origin: left center;
+  }
+
+  .traffic-message-b {
+    right: 8%;
+    top: 30%;
+    transform-origin: right center;
+  }
+
+  .traffic-message {
+    padding: 7px 8px;
+    gap: 6px;
+    box-shadow: 3px 3px 0 rgba(8,21,74,.2);
+  }
+
+  .traffic-message span,
+  .typing-packet > span {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+    font-size: 7px;
+  }
+
+  .traffic-message p {
+    font-size: 10px;
+  }
+
+  .typing-packet {
+    left: 34%;
+    top: 58%;
+    padding: 6px 8px;
+  }
+
+  .demo-signal {
+    right: 10px;
+    top: 10px;
+    transform: scale(.92);
+    transform-origin: top right;
+  }
+}
+
+@media (max-width: 430px) {
+  .traffic-message-b,
+  .typing-packet {
+    display: none;
+  }
+
+  .traffic-message-a {
+    left: 22%;
+    top: 48%;
+  }
+
+  .demo-bubble-a,
+  .demo-bubble-b {
+    max-width: 86%;
   }
 }
 
