@@ -131,7 +131,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             presence.connect(sessionId, roomId, displayName);
         } catch (RuntimeException failure) {
             protection.closeWebSocket(sessionId);
-            throw new MessageDeliveryException(failure.getMessage(), failure);
+            throw new MessageDeliveryException(failure.getMessage() == null ? "WebSocket connection rejected" : failure.getMessage());
         }
     }
 
