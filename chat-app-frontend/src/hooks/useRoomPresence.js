@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getPresence } from "../services/RoomService";
 
 export default function useRoomPresence({ roomId, currentUser, connected }) {
@@ -28,15 +28,5 @@ export default function useRoomPresence({ roomId, currentUser, connected }) {
       member.name === currentUser ? { ...member, online: false } : member));
   }, [currentUser]);
 
-  const visibleMembers = useMemo(() => {
-    if (members.length) return members;
-    return currentUser ? [{ name: currentUser, online: false, lastSeen: null }] : [];
-  }, [members, currentUser]);
-  const onlineMembers = useMemo(() => visibleMembers.filter(member => member.online), [visibleMembers]);
-  const offlineMembers = useMemo(() => visibleMembers.filter(member => !member.online), [visibleMembers]);
-
-  return {
-    visibleMembers, onlineMembers, offlineMembers, onlineCount: onlineMembers.length,
-    acceptPresence, synchronizePresence, markDisconnected,
-  };
+  return { members, acceptPresence, synchronizePresence, markDisconnected };
 }
