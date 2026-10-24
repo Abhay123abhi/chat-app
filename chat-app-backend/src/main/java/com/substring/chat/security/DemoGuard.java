@@ -71,6 +71,7 @@ public class DemoGuard {
     /** Reserve at WebSocket establishment, BEFORE any STOMP CONNECT frame arrives. */
     public synchronized boolean openSocket(String sessionId, String address) {
         if (!limits.isEnabled()) return true;
+        if (sessionId == null || sessionId.isBlank()) return false;
         if (sockets.containsKey(sessionId)) return true;
         if (sockets.size() >= positive(limits.getMaxConnectionsGlobal())
                 || sockets.values().stream().filter(s -> s.address().equals(address)).count()

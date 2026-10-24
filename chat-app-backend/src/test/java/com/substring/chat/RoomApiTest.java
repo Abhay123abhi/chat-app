@@ -30,7 +30,7 @@ class RoomApiTest {
         room.setId("internal-mongo-id");
         room.setNextSequence(30);
         when(rooms.findByRoomId("demo")).thenReturn(Optional.of(room));
-        var mvc = MockMvcBuilders.standaloneSetup(new RoomController(rooms, messages))
+        var mvc = MockMvcBuilders.standaloneSetup(new RoomController(rooms, messages, new com.substring.chat.config.GuardProperties()))
                 .setControllerAdvice(new ApiExceptionHandler()).build();
         mvc.perform(post("/api/v1/rooms").contentType("text/plain").content("demo"))
                 .andExpect(status().isCreated())
@@ -49,7 +49,7 @@ class RoomApiTest {
         when(rooms.findByRoomId("missing")).thenReturn(Optional.empty());
         when(rooms.existsByRoomId("missing")).thenReturn(false);
         var mvc = MockMvcBuilders.standaloneSetup(
-                new RoomController(rooms, messages),
+                new RoomController(rooms, messages, new com.substring.chat.config.GuardProperties()),
                 new PresenceController(new PresenceService(), rooms))
                 .setControllerAdvice(new ApiExceptionHandler()).build();
         mvc.perform(get("/api/v1/rooms/missing"))

@@ -1,6 +1,7 @@
 package com.substring.chat.config;
 
 import com.substring.chat.services.PresenceService;
+import com.substring.chat.security.DemoGuard;
 import com.substring.chat.validation.ChatValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -15,6 +16,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @RequiredArgsConstructor
 public class PresenceEventListener {
     private final PresenceService presence;
+    private final DemoGuard protection;
     private final SimpMessagingTemplate broker;
 
     @EventListener
@@ -39,6 +41,7 @@ public class PresenceEventListener {
 
     @EventListener
     public void disconnected(SessionDisconnectEvent event) {
+        protection.closeSocket(event.getSessionId());
         var roomId = presence.disconnect(event.getSessionId());
         if (roomId != null) {
             publish(roomId);

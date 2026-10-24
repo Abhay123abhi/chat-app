@@ -13,4 +13,6 @@ public class Room {
     @Id private String id;
     @Indexed(unique = true) private String roomId;
     private long nextSequence;
+    @org.springframework.data.mongodb.core.index.Indexed(expireAfter = "0s")
+    private java.time.Instant expiresAt;
 }
