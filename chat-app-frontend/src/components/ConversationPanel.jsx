@@ -1,20 +1,25 @@
-import { FiArrowDown, FiSend } from "react-icons/fi";
+import { Fragment } from "react";
+import { FiArrowDown, FiHash, FiSend } from "react-icons/fi";
+import { calendarDayKey, formatDayLabel } from "../services/chatPresentation";
 
 export default function ConversationPanel({
-  roomId, currentUser, onlineCount, visibleMembers, historyError, box, follow,
+  roomId, currentUser, status, onlineCount, visibleMembers, historyError, box, follow,
   messages, pending, hasOlder, loadingOlder, loadOlder, transmit, newMessages,
   setNewMessages, input, setInput, send,
 }) {
   return (
   <section className="conversation-panel">
     <header className="conversation-header">
-      <div>
-        <p>Conversation</p>
-        <h2>Messages</h2>
+      <div className="conversation-heading">
+        <p className="conversation-eyebrow">LIVE CONVERSATION</p>
+        <h2><FiHash aria-hidden="true" /> <span>{roomId}</span></h2>
+        <p className="conversation-subtitle">Guest room · Messages stay here when you reconnect</p>
       </div>
-      <div className="conversation-presence">
-        <span><i></i>{onlineCount} online</span>
-        <small>{visibleMembers.length} {visibleMembers.length === 1 ? "person" : "people"}</small>
+      <div className="conversation-presence" aria-label="Room connection and members">
+        <span className={`conversation-live-status ${status === "Live" ? "is-live" : "is-connecting"}`}>
+          <i aria-hidden="true"></i>{status}
+        </span>
+        <small>{onlineCount} online · {visibleMembers.length} {visibleMembers.length === 1 ? "person" : "people"}</small>
       </div>
     </header>
 
@@ -37,15 +42,31 @@ export default function ConversationPanel({
         </div>
       )}
 
-      {messages.map(message => {
+      {messages.map((message, index) => {
+        const previous = messages[index - 1];
+        const showDay = !previous || calendarDayKey(previous.timeStamp) !== calendarDayKey(message.timeStamp);
         const own = message.sender === currentUser;
-        return <article key={message.id} className={`message-row ${own ? "message-own" : "message-other"}`}>
-          {!own && <div className="message-avatar">{message.sender?.slice(0, 1)?.toUpperCase()}</div>}
-          <div className="message-content">
-            <div className="message-meta"><strong>{message.sender}</strong><time dateTime={message.timeStamp}>{new Date(message.timeStamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></div>
-            <div className="message-bubble"><p>{message.content}</p></div>
-          </div>
-        </article>;
+        return (
+          <Fragment key={message.id}>
+            {showDay && (
+              <div className="message-day-separator" aria-label={`Messages from ${formatDayLabel(message.timeStamp)}`}>
+                <span>{formatDayLabel(message.timeStamp)}</span>
+              </div>
+            )}
+            <article className={`message-row ${own ? "message-own" : "message-other"}`}>
+              {!own && <div className="message-avatar" aria-hidden="true">{message.sender?.slice(0, 1)?.toUpperCase()}</div>}
+              <div className="message-content">
+                <div className="message-meta">
+                  <strong>{message.sender}</strong>
+                  <time dateTime={message.timeStamp}>
+                    {new Date(message.timeStamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </time>
+                </div>
+                <div className="message-bubble"><p>{message.content}</p></div>
+              </div>
+            </article>
+          </Fragment>
+        );
       })}
 
       {pending.map(message => <article key={message.clientMessageId} className="message-row message-own message-pending">
@@ -64,6 +85,7 @@ export default function ConversationPanel({
     }}>New messages <FiArrowDown /></button>}
 
     <form onSubmit={send} className="composer">
+      <div className="composer-eyebrow">MESSAGE IN <strong>#{roomId}</strong></div>
       <div className="composer-inner">
         <label><span className="sr-only">Message</span>
           <textarea value={input} onChange={event => setInput(event.target.value)} maxLength={4000} rows={1}
@@ -76,6 +98,7 @@ export default function ConversationPanel({
         </label>
         <button disabled={!input.trim()} className="send-button" aria-label="Send message"><FiSend /></button>
       </div>
+      <p className="composer-hint">Enter to send <span aria-hidden="true">·</span> Shift + Enter for a new line</p>
     </form>
   </section>
   );

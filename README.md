@@ -84,6 +84,10 @@ Then open the Vite URL, normally `http://localhost:5173`.
 
 For nonlocal MongoDB, set `SPRING_MONGODB_URI` before starting Spring Boot. The older `SPRING_DATA_MONGODB_URI` variable is temporarily accepted as a fallback to ease local or deployment migration.
 
+## Chat UI
+
+The conversation view uses the room ID header, live connection badge, grouped online/offline members with last-seen timestamps, day separators, durable message bubbles and an Enter-to-send composer. These are presentation changes; REST-first persistence and native STOMP behavior remain unchanged.
+
 ## Main flow
 
 1. Create or join a room.

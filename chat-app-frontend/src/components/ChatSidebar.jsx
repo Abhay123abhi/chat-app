@@ -1,4 +1,5 @@
 import { FiArrowLeft, FiHash, FiUsers, FiWifi } from "react-icons/fi";
+import { formatLastSeen } from "../services/chatPresentation";
 
 function MemberRow({ member, currentUser }) {
   const isCurrent = member.name === currentUser;
@@ -6,10 +7,13 @@ function MemberRow({ member, currentUser }) {
     <div className="member-row" title={member.lastSeen ? `Last seen ${new Date(member.lastSeen).toLocaleString()}` : undefined}>
       <span className="member-avatar">{member.name?.slice(0, 1)?.toUpperCase()}</span>
       <div className="member-copy">
-        <strong>{member.name}{isCurrent && <em> you</em>}</strong>
+        <strong>{member.name}{isCurrent && <em className="member-you">you</em>}</strong>
         <span className={member.online ? "member-online" : "member-offline"}>
           <i></i>{member.online ? "Online" : "Offline"}
         </span>
+        {!member.online && member.lastSeen && (
+          <small className="member-last-seen">{formatLastSeen(member.lastSeen)}</small>
+        )}
       </div>
     </div>
   );
