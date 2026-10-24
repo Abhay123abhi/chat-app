@@ -22,10 +22,9 @@ export default function ChatPage() {
     synchronizePresence: presence.synchronizePresence, markDisconnected: presence.markDisconnected,
   });
 
-  // The fallback self-member state tracks the actual connection status.
-  const visibleMembers = presence.visibleMembers.length === 1 &&
-    presence.visibleMembers[0].name === currentUser && presence.visibleMembers[0].lastSeen === null
-      ? [{ ...presence.visibleMembers[0], online: status === "Live" }] : presence.visibleMembers;
+  const visibleMembers = presence.members.length
+    ? presence.members
+    : currentUser ? [{ name: currentUser, online: status === "Live", lastSeen: null }] : [];
   const onlineMembers = visibleMembers.filter(member => member.online);
   const offlineMembers = visibleMembers.filter(member => !member.online);
   const onlineCount = onlineMembers.length;
