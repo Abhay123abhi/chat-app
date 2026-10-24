@@ -1,6 +1,5 @@
-import { createContext, useContext, useState } from "react";
-
-const ChatContext = createContext();
+import { useState } from "react";
+import { ChatContext } from "./chatContext";
 
 export const ChatProvider = ({ children }) => {
   const [roomId, setRoomId] = useState("");
@@ -23,5 +22,3 @@ export const ChatProvider = ({ children }) => {
   );
 };
 
-const useChatContext = () => useContext(ChatContext);
-export default useChatContext;
