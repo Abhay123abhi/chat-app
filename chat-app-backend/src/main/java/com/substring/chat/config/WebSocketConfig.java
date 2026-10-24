@@ -95,9 +95,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 if (headers.getCommand() == StompCommand.CONNECT && guard.isEnabled()) {
                     var session = headers.getSessionId();
                     var roomId = headers.getFirstNativeHeader("roomId");
+                    var displayName = headers.getFirstNativeHeader("displayName");
                     var attrs = headers.getSessionAttributes();
                     var ip = attrs == null ? "unknown" : String.valueOf(attrs.getOrDefault("guardIp", "unknown"));
                     if (!guard.isChatEnabled() || session == null || roomId == null
+                            || displayName == null || displayName.isBlank() || displayName.trim().length() > 50
                             || !roomId.matches("[A-Za-z0-9_-]{1,64}")
                             || !rooms.existsByRoomId(roomId)
                             || !protection.openSocket(session, ip)
@@ -113,8 +115,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     throw new MessageDeliveryException("Send messages through the durable REST endpoint");
                 }
 
-                if (headers.getCommand() == StompCommand.SUBSCRIBE && !isAllowedSubscription(headers.getDestination())) {
-                    throw new MessageDeliveryException("Invalid room subscription");
+                if (headers.getCommand() == StompCommand.SUBSCRIBE) {
+                    var destination = headers.getDestination();
+                    if (!isAllowedSubscription(destination)) {
+                        throw new MessageDeliveryException("Invalid room subscription");
+                    }
+                    if (guard.isEnabled()) {
+                        var roomId = protection.roomForSession(headers.getSessionId());
+                        if (roomId == null || (!("/topic/room/" + roomId).equals(destination)
+                                && !("/topic/presence/" + roomId).equals(destination))) {
+                            throw new MessageDeliveryException("Room subscription not authorized for this session");
+                        }
+                    }
                 }
 
                 return message;

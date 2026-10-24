@@ -96,6 +96,11 @@ public class DemoGuard {
         sockets.remove(sessionId);
     }
 
+    public synchronized String roomForSession(String sessionId) {
+        var socket = sockets.get(sessionId);
+        return socket == null ? null : socket.roomId();
+    }
+
     public synchronized int activeSockets() {
         return sockets.size();
     }
