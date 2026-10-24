@@ -31,8 +31,13 @@ jobs:
           cache-dependency-path: chat-app-frontend/package-lock.json
       - run: npm ci
         working-directory: chat-app-frontend
-      - run: npm run lint
+      - run: npm run lint -- --max-warnings=0
         working-directory: chat-app-frontend
+      - name: Report production dependency advisories
+        working-directory: chat-app-frontend
+        run: |
+          npm audit --omit=dev --json > npm-audit-runtime.json || true
+          node -e 'const r = require("./npm-audit-runtime.json"); console.log("Runtime vulnerabilities:", JSON.stringify(r.metadata?.vulnerabilities)); for (const [name, v] of Object.entries(r.vulnerabilities || {})) console.log(name, v.severity, v.range, JSON.stringify(v.fixAvailable));'
       - run: npm test
         working-directory: chat-app-frontend
       - run: npm run build

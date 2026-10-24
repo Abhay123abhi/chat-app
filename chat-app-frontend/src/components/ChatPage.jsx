@@ -4,7 +4,7 @@ import SockJS from "sockjs-client";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import { FiArrowDown, FiArrowLeft, FiHash, FiSend, FiUsers, FiWifi } from "react-icons/fi";
-import useChatContext from "../context/ChatContext";
+import useChatContext from "../context/useChatContext";
 import { getMessages, getPresence, sendMessageApi } from "../services/RoomService";
 import { mergeMessages } from "../services/messageState";
 

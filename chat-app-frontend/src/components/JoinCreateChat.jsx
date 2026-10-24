@@ -1,7 +1,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { createRoomApi, joinChatApi } from "../services/RoomService";
-import useChatContext from "../context/ChatContext";
+import useChatContext from "../context/useChatContext";
 import { useNavigate } from "react-router";
 import { FiArrowRight, FiHash, FiMessageCircle } from "react-icons/fi";
 
