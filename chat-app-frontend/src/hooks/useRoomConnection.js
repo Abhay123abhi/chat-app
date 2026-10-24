@@ -11,7 +11,6 @@ export default function useRoomConnection({
     if (!connected || !roomId || !currentUser) return;
     let disposed = false;
     const abort = new AbortController();
-    setStatus("Connecting");
     const client = new Client({
       brokerURL: `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws/chat`,
       connectHeaders: { roomId, displayName: currentUser },

@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { getPresence } from "../services/RoomService";
 
-export default function useRoomPresence({ roomId, currentUser, connected }) {
+export default function useRoomPresence({ roomId, currentUser }) {
   const [members, setMembers] = useState([]);
   const activeRoom = useRef(roomId);
   activeRoom.current = roomId;
-
-  useEffect(() => { setMembers([]); }, [roomId, currentUser, connected]);
 
   const acceptPresence = useCallback(snapshot => {
     if (snapshot?.roomId === activeRoom.current && Array.isArray(snapshot.members))

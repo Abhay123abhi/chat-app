@@ -27,12 +27,7 @@ export default function useRoomMessages({ roomId, currentUser, connected, box, f
     activeRoom.current = roomId;
     const current = { disposed: false, busy: false, cursor: null, abort: new AbortController() };
     session.current = current;
-    setMessages([]);
-    setPending([]);
-    setHistoryError("");
-    setHasOlder(false);
-    setLoadingOlder(false);
-    setNewMessages(false);
+    // The keyed room component remounts these hooks with their initial state.
     follow.current = true;
     return () => {
       current.disposed = true;
