@@ -38,7 +38,7 @@ class DemoGuardTest {
     }
 
     @Test
-    void socketsAreLimitedBeforeConnectAndReleasedOnDisconnect() {
+    void socketsAreLimitedAtStompConnectAndReleasedOnDisconnect() {
         var p = new GuardProperties();
         p.setEnabled(true);
         p.setMaxConnectionsGlobal(3);
@@ -51,11 +51,12 @@ class DemoGuardTest {
         assertFalse(guard.joinSocketRoom("s2", "room"));
         assertFalse(guard.openSocket("s3", "ip1"));
         assertTrue(guard.openSocket("s4", "ip2"));
+        assertFalse(guard.openSocket("s5", "ip2"));
+        guard.closeSocket("s1");
         assertTrue(guard.openSocket("s5", "ip2"));
         assertFalse(guard.openSocket("s6", "ip3"));
-        guard.closeSocket("s1");
         assertTrue(guard.joinSocketRoom("s2", "room"));
-        assertEquals(2, guard.activeSockets());
+        assertEquals(3, guard.activeSockets());
     }
 
     @Test
