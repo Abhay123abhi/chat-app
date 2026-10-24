@@ -89,6 +89,14 @@ jobs:
       - name: Audit production dependencies (high+ only)
         run: npm audit --omit=dev --audit-level=high
 
+  public-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build optional single-service public demo image
+        run: docker build -f Dockerfile.public -t room-chat-public:ci .
+
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 20
