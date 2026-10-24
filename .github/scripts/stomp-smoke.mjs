@@ -74,6 +74,31 @@ try {
     assert.ok(frame.includes("native socket works"), name + " did not receive the message");
   }
   console.log("Two STOMP subscribers received the persisted message.");
+  // A REST retry with the same request ID must return the original server message.
+  const retried = await fetch(base + "/" + ROOM + "/messages", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ clientMessageId: "stomp-ci-1", sender: "Alice", content: "native socket works" })
+  });
+  assert.equal(retried.status, 200, "Idempotent retry");
+  const same = await retried.json();
+  const original = await sent.json();
+  assert.equal(same.id, original.id, "A retry must not create a duplicate");
+  const historyResponse = await fetch(base + "/" + ROOM + "/messages?limit=10");
+  assert.equal(historyResponse.status, 200);
+  const history = await historyResponse.json();
+  assert.equal(history.messages.filter(msg => msg.clientMessageId === "stomp-ci-1").length, 1);
+
+  // A new session can subscribe after a disconnect and receive subsequent messages.
+  bob.close();
+  const charlie = await openClient("Charlie");
+  const delivery = waitForFrame(charlie, "MESSAGE");
+  const next = await fetch(base + "/" + ROOM + "/messages", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ clientMessageId: "stomp-ci-2", sender: "Alice", content: "after reconnect" })
+  });
+  assert.equal(next.status, 200);
+  assert.ok((await delivery).includes("after reconnect"), "Reconnected subscriber must receive messages");
+  console.log("Idempotency, history and reconnect smoke checks passed.");
 } finally {
   for (const socket of sockets) {
     try { socket.close(); } catch {}
