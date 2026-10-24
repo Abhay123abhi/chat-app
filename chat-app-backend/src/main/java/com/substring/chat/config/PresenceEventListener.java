@@ -8,7 +8,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
@@ -34,7 +33,8 @@ public class PresenceEventListener {
             ChatValidation.validRoomId(roomId);
             presence.connect(sessionId, roomId, displayName);
             publish(roomId);
-        } catch (IllegalArgumentException | ResponseStatusException ignored) {
+        } catch (RuntimeException ignored) {
+            protection.closeSocket(sessionId);
             // Invalid presence metadata must not bring down the WebSocket broker.
         }
     }
