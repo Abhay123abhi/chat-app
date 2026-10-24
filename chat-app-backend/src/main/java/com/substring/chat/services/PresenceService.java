@@ -2,12 +2,14 @@ package com.substring.chat.services;
 
 import com.substring.chat.dto.MemberPresence;
 import com.substring.chat.dto.PresenceSnapshot;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,7 +17,7 @@ public class PresenceService {
     private final ConcurrentHashMap<String, SessionPresence> sessions = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, MemberState>> rooms = new ConcurrentHashMap<>();
 
-    public void connect(String sessionId, String roomId, String displayName) {
+    public synchronized void connect(String sessionId, String roomId, String displayName) {
         if (sessionId == null || sessionId.isBlank()) {
             return;
         }
@@ -33,7 +35,7 @@ public class PresenceService {
         member.lastSeen = Instant.now();
     }
 
-    public String disconnect(String sessionId) {
+    public synchronized String disconnect(String sessionId) {
         if (sessionId == null) {
             return null;
         }
@@ -57,7 +59,7 @@ public class PresenceService {
         return session.roomId();
     }
 
-    public PresenceSnapshot snapshot(String roomId) {
+    public synchronized PresenceSnapshot snapshot(String roomId) {
         var members = rooms.get(roomId);
         if (members == null) {
             return new PresenceSnapshot(roomId, List.of());
@@ -73,6 +75,23 @@ public class PresenceService {
                 .toList();
 
         return new PresenceSnapshot(roomId, result);
+    }
+
+    @Scheduled(fixedDelayString = "${chat.presence.cleanup-interval:PT15M}")
+    public void cleanupInactiveMembers() {
+        evictInactiveBefore(Instant.now().minus(Duration.ofHours(24)));
+    }
+
+    // Synchronized with connect/disconnect so live sessions are never evicted.
+    synchronized void evictInactiveBefore(Instant cutoff) {
+        rooms.entrySet().removeIf(roomEntry -> {
+            var members = roomEntry.getValue();
+            members.entrySet().removeIf(entry -> {
+                var member = entry.getValue();
+                return member.sessions.isEmpty() && member.lastSeen.isBefore(cutoff);
+            });
+            return members.isEmpty();
+        });
     }
 
     private static String validDisplayName(String displayName) {

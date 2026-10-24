@@ -30,7 +30,7 @@ Spring Boot -- STOMP/WebSocket --> connected room members
 
 Messages are written through the REST API first. After MongoDB stores a message, the backend publishes it to the room over STOMP. If a client reconnects, it loads message history again and merges anything it missed.
 
-Presence is session based: a connected WebSocket session is Online. Users seen during the current backend process can appear Offline after disconnecting.
+Presence is session based: a connected WebSocket session is Online. Users seen during the current backend process can appear Offline after disconnecting. Disconnected member entries expire after 24 hours (checked every 15 minutes).
 
 ## Run locally
 

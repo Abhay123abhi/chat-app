@@ -9,6 +9,7 @@ import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -115,6 +116,47 @@ class ChatAppBackendApplicationTests {
         assertEquals(List.of(5L, 7L), page.messages().stream().map(Message::getSequence).toList());
         assertFalse(page.hasMore());
         assertEquals(7L, page.nextCursor());
+    }
+
+    @Test
+    void raceWithSamePayloadReturnsExistingMessage() {
+        var room = new Room();
+        room.setNextSequence(5);
+        var existing = message(4);
+        existing.setSender("Guest");
+        existing.setContent("hello");
+        when(mongo.findOne(any(Query.class), eq(Message.class))).thenReturn(null, existing);
+        when(mongo.findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), eq(Room.class))).thenReturn(room);
+        when(mongo.insert(any(Message.class))).thenThrow(new DuplicateKeyException("duplicate"));
+        assertSame(existing, service.save("room", new MessageRequest("key", "Guest", "hello")));
+    }
+
+    @Test
+    void raceWithDifferentPayloadReturnsConflict() {
+        var room = new Room();
+        room.setNextSequence(5);
+        var existing = message(4);
+        existing.setSender("Guest");
+        existing.setContent("different");
+        when(mongo.findOne(any(Query.class), eq(Message.class))).thenReturn(null, existing);
+        when(mongo.findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), eq(Room.class))).thenReturn(room);
+        when(mongo.insert(any(Message.class))).thenThrow(new DuplicateKeyException("duplicate"));
+        assertEquals(409, assertThrows(ResponseStatusException.class,
+                () -> service.save("room", new MessageRequest("key", "Guest", "hello")))
+                .getStatusCode().value());
+    }
+
+    @Test
+    void unrelatedUniqueIndexCollisionIsRethrown() {
+        var room = new Room();
+        room.setNextSequence(5);
+        when(mongo.findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), eq(Room.class))).thenReturn(room);
+        when(mongo.insert(any(Message.class))).thenThrow(new DuplicateKeyException("sequence"));
+        assertThrows(DuplicateKeyException.class,
+                () -> service.save("room", new MessageRequest("key", "Guest", "hello")));
     }
 
     private static Message message(long sequence) {

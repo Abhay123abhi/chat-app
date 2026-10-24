@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -72,7 +73,17 @@ public class MessageService {
             message.setContent(request.content().trim());
             message.setTimeStamp(Instant.now());
 
-            return mongo.insert(message);
+            try {
+                return mongo.insert(message);
+            } catch (DuplicateKeyException collision) {
+                // A concurrent backend instance can win the same client request ID.
+                var alreadySaved = mongo.findOne(identity, Message.class);
+                if (alreadySaved == null) {
+                    throw collision; // Not an idempotency collision.
+                }
+                ensureSamePayload(alreadySaved, request);
+                return alreadySaved;
+            }
         } finally {
             writer.unlock();
         }

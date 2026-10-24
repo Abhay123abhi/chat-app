@@ -2,7 +2,12 @@ name: Chat checks
 
 on:
   push:
+    branches: [main]
   pull_request:
+
+concurrency:
+  group: chat-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -10,6 +15,7 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -22,6 +28,7 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -45,22 +52,31 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - run: docker compose config --quiet
       - run: docker compose up --build -d
       - name: Smoke test
+        shell: bash
         run: |
+          set -euo pipefail
+          ready=0
           for attempt in $(seq 1 60); do
-            if curl -fsS -H 'Content-Type: text/plain' --data 'ci-room' http://localhost:3000/api/v1/rooms; then
+            if curl -fsS http://localhost:3000/chat/info >/dev/null 2>&1; then
+              ready=1
               break
             fi
             sleep 2
           done
-          curl -fsS -H 'Content-Type: application/json' \
+          test "$ready" -eq 1
+          curl -fsS -H 'Content-Type: text/plain' --data 'ci-room' http://localhost:3000/api/v1/rooms
+          saved=$(curl -fsS -H 'Content-Type: application/json' \
             --data '{"clientMessageId":"ci-1","sender":"CI","content":"hello"}' \
-            http://localhost:3000/api/v1/rooms/ci-room/messages
-          curl -fsS 'http://localhost:3000/api/v1/rooms/ci-room/messages?limit=10'
+            http://localhost:3000/api/v1/rooms/ci-room/messages)
+          echo "$saved" | grep -q '"content":"hello"'
+          history=$(curl -fsS 'http://localhost:3000/api/v1/rooms/ci-room/messages?limit=10')
+          echo "$history" | grep -q '"clientMessageId":"ci-1"'
       - if: always()
         run: docker compose logs --tail=100
       - if: always()
