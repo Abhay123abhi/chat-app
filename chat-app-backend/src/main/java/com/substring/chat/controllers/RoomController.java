@@ -1,6 +1,7 @@
 package com.substring.chat.controllers;
 
 import com.substring.chat.dto.MessagePageResponse;
+import com.substring.chat.dto.RoomResponse;
 import com.substring.chat.entities.Room;
 import com.substring.chat.repositories.RoomRepository;
 import com.substring.chat.services.MessageService;
@@ -27,24 +28,26 @@ public class RoomController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Room create(@RequestBody String roomId) {
+    public RoomResponse create(@RequestBody String roomId) {
         ChatValidation.validRoomId(roomId);
 
         var room = new Room();
         room.setRoomId(roomId);
 
         try {
-            return rooms.insert(room);
+            rooms.insert(room);
+            return new RoomResponse(roomId);
         } catch (DuplicateKeyException duplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Room already exists");
         }
     }
 
     @GetMapping("/{roomId}")
-    public Room join(@PathVariable String roomId) {
+    public RoomResponse join(@PathVariable String roomId) {
         ChatValidation.validRoomId(roomId);
-        return rooms.findByRoomId(roomId)
+        var found = rooms.findByRoomId(roomId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found"));
+        return new RoomResponse(found.getRoomId());
     }
 
     @GetMapping("/{roomId}/messages")
