@@ -46,7 +46,7 @@ export default function ChatPage() {
       <ChatSidebar roomId={roomId} currentUser={currentUser} status={status}
         onlineMembers={onlineMembers} offlineMembers={offlineMembers}
         onlineCount={onlineCount} leave={leave} />
-      <ConversationPanel roomId={roomId} currentUser={currentUser} onlineCount={onlineCount}
+      <ConversationPanel roomId={roomId} currentUser={currentUser} status={status} onlineCount={onlineCount}
         visibleMembers={visibleMembers} box={box} follow={follow}
         {...history} />
     </main>
