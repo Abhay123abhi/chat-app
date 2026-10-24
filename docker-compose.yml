@@ -19,7 +19,7 @@ services:
       JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=10 -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
       SERVER_TOMCAT_THREADS_MAX: "40"
       SERVER_TOMCAT_THREADS_MIN_SPARE: "4"
-      SPRING_DATA_MONGODB_URI: "mongodb://mongo:27017/chat-app?w=majority&journal=true"
+      SPRING_MONGODB_URI: "mongodb://mongo:27017/chat-app?w=majority&journal=true"
     depends_on:
       mongo:
         condition: service_healthy

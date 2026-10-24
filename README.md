@@ -6,7 +6,7 @@ Users can create a room, join with a display name, send messages, see online/off
 
 ## Stack
 
-- Java 21 + Spring Boot
+- Java 21 + Spring Boot 4.1.2
 - MongoDB
 - React + Vite
 - STOMP over native WebSocket
@@ -67,7 +67,7 @@ Start MongoDB:
 docker compose up -d mongo
 ```
 
-Run the backend from `chat-app-backend`:
+Run the backend from `chat-app-backend` (Java 21 required):
 
 ```powershell
 ./mvnw.cmd spring-boot:run
@@ -81,6 +81,8 @@ npm run dev
 ```
 
 Then open the Vite URL, normally `http://localhost:5173`.
+
+For nonlocal MongoDB, set `SPRING_MONGODB_URI` before starting Spring Boot. The older `SPRING_DATA_MONGODB_URI` variable is temporarily accepted as a fallback to ease local or deployment migration.
 
 ## Main flow
 
