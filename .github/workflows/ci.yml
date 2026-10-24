@@ -47,6 +47,24 @@ jobs:
         working-directory: chat-app-frontend
       - run: npm run build
         working-directory: chat-app-frontend
+      - name: SPA /chat route works with Vite proxy
+        working-directory: chat-app-frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run dev -- --host 127.0.0.1 > /tmp/chat-vite.log 2>&1 &
+          vite_pid=$!
+          trap 'kill "$vite_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:5173/chat -o /tmp/chat-vite-route.html; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          grep -q '<div id="root"></div>' /tmp/chat-vite-route.html
 
   docker:
     runs-on: ubuntu-latest
@@ -69,6 +87,9 @@ jobs:
             sleep 2
           done
           test "$ready" -eq 1
+          # Deep links to the React /chat page must return HTML, not a WebSocket upgrade error.
+          curl -fsS http://localhost:3000/chat -o /tmp/chat-nginx-route.html
+          grep -q '<div id="root"></div>' /tmp/chat-nginx-route.html
           curl -fsS -H 'Content-Type: text/plain' --data 'ci-room' http://localhost:3000/api/v1/rooms
           saved=$(curl -fsS -H 'Content-Type: application/json' \
             --data '{"clientMessageId":"ci-1","sender":"CI","content":"hello"}' \

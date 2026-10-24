@@ -91,12 +91,23 @@ The conversation view uses the room ID header, live connection badge, grouped on
 ## Main flow
 
 1. Create or join a room.
-2. The browser connects to `/chat` using STOMP over native WebSocket.
+2. The browser navigates to the React `/chat` page and connects to the separate `/ws/chat` STOMP/WebSocket endpoint.
 3. Sending a message calls `POST /api/v1/rooms/{roomId}/messages`.
 4. The backend stores the message in MongoDB.
 5. The saved message is published to `/topic/room/{roomId}`.
 6. Connected clients receive it immediately.
 7. On reconnect, the client loads history and merges missed messages.
+
+## Frontend page routes and WebSocket endpoint
+
+| URL | Purpose |
+| --- | --- |
+| `/` | Create or join a room |
+| `/chat` | React conversation page (without an in-memory guest session, redirects to `/`) |
+| `/ws/chat` | STOMP over WebSocket, not a browser page |
+| `/api/v1/...` | Room, message, history and presence REST endpoints |
+
+The Vite development server and production Nginx proxy only `/ws/chat` to the backend for live WebSocket traffic. Normal requests to `/chat` must render the React SPA, including browser refreshes. Since guest identity is kept in React memory, refreshing `/chat` redirects to the entry page; it no longer displays a WebSocket upgrade error.
 
 ## Useful endpoints
 
