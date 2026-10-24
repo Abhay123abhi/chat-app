@@ -36,7 +36,7 @@ class ChatAppBackendApplicationTests {
     @BeforeEach
     void setup() {
         mongo = mock(MongoTemplate.class);
-        service = new MessageService(mongo);
+        service = new MessageService(mongo, new com.substring.chat.config.GuardProperties());
     }
 
     @Test

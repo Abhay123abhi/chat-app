@@ -1,0 +1,29 @@
+# Optional Render Blueprint. Do not create it until choosing a public deployment.
+services:
+  - type: web
+    name: room-chat-demo
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile.public
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: public
+      - key: SPRING_MONGODB_URI
+        sync: false
+      - key: CHAT_GUARD_ENABLED
+        value: "true"
+      - key: CHAT_GUARD_MAX_ROOMS
+        value: "25"
+      - key: CHAT_GUARD_MAX_MESSAGES_PER_ROOM
+        value: "1000"
+      - key: CHAT_GUARD_RETENTION_DAYS
+        value: "7"
+      - key: CHAT_GUARD_CHAT_ENABLED
+        value: "true"
+      - key: CHAT_GUARD_ROOM_CREATION_ENABLED
+        value: "true"
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:InitialRAMPercentage=10 -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError

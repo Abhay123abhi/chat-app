@@ -1,5 +1,6 @@
 package com.substring.chat.controllers;
 
+import com.substring.chat.config.GuardProperties;
 import com.substring.chat.dto.MessagePageResponse;
 import com.substring.chat.dto.RoomResponse;
 import com.substring.chat.entities.Room;
@@ -25,14 +26,21 @@ import org.springframework.web.server.ResponseStatusException;
 public class RoomController {
     private final RoomRepository rooms;
     private final MessageService messages;
+    private final GuardProperties guard;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RoomResponse create(@RequestBody String roomId) {
         ChatValidation.validRoomId(roomId);
+        if (guard.isEnabled() && rooms.count() >= guard.getMaxRooms()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Public demo room capacity reached");
+        }
 
         var room = new Room();
         room.setRoomId(roomId);
+        if (guard.isEnabled()) room.setExpiresAt(java.time.Instant.now().plus(
+                java.time.Duration.ofDays(Math.max(1, guard.getRetentionDays()))));
 
         try {
             rooms.insert(room);

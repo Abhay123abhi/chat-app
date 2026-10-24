@@ -1,0 +1,23 @@
+# Optional single-service image for public demo hosting.
+# Keeps the up-to-date React app, REST endpoints and /ws/chat on ONE origin.
+FROM node:24-alpine AS frontend-build
+WORKDIR /frontend
+COPY chat-app-frontend/package*.json ./
+RUN npm ci
+COPY chat-app-frontend/ ./
+RUN npm run build
+
+FROM maven:3.9.9-eclipse-temurin-21 AS backend-build
+WORKDIR /backend
+COPY chat-app-backend/pom.xml ./
+COPY chat-app-backend/src ./src
+COPY --from=frontend-build /frontend/dist ./src/main/resources/static
+RUN mvn -B -DskipTests package
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=backend-build /backend/target/*.jar /app/app.jar
+ENV PORT=10000
+USER 10001
+EXPOSE 10000
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

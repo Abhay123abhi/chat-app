@@ -1,5 +1,6 @@
 package com.substring.chat.services;
 
+import com.substring.chat.config.GuardProperties;
 import com.substring.chat.dto.MemberPresence;
 import com.substring.chat.dto.PresenceSnapshot;
 import java.time.Duration;
@@ -14,6 +15,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PresenceService {
+    private final GuardProperties guard;
+    public PresenceService() { this(new GuardProperties()); }
+    @org.springframework.beans.factory.annotation.Autowired
+    public PresenceService(GuardProperties guard) { this.guard = guard; }
     private final ConcurrentHashMap<String, SessionPresence> sessions = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, MemberState>> rooms = new ConcurrentHashMap<>();
 
@@ -28,7 +33,25 @@ public class PresenceService {
 
         var members = rooms.computeIfAbsent(roomId, ignored -> new ConcurrentHashMap<>());
         var memberKey = name.toLowerCase(Locale.ROOT);
-        var member = members.computeIfAbsent(memberKey, ignored -> new MemberState(name));
+        var member = members.get(memberKey);
+        if (member == null && guard.isEnabled()) {
+            long active = members.values().stream().filter(m -> !m.sessions.isEmpty()).count();
+            if (active >= guard.getMaxActiveMembersPerRoom()) {
+                throw new IllegalStateException("Room member limit reached");
+            }
+            if (members.size() >= guard.getMaxRememberedMembersPerRoom()) {
+                members.entrySet().stream().filter(e -> e.getValue().sessions.isEmpty())
+                        .min(Comparator.comparing(e -> e.getValue().lastSeen))
+                        .ifPresent(e -> members.remove(e.getKey()));
+                if (members.size() >= guard.getMaxRememberedMembersPerRoom()) {
+                    throw new IllegalStateException("Room presence limit reached");
+                }
+            }
+        }
+        if (member == null) {
+            member = new MemberState(name);
+            members.put(memberKey, member);
+        }
 
         member.displayName = name;
         member.sessions.add(sessionId);

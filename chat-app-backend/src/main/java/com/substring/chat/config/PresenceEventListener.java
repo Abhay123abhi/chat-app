@@ -1,13 +1,13 @@
 package com.substring.chat.config;
 
 import com.substring.chat.services.PresenceService;
+import com.substring.chat.security.DemoGuard;
 import com.substring.chat.validation.ChatValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
@@ -15,6 +15,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @RequiredArgsConstructor
 public class PresenceEventListener {
     private final PresenceService presence;
+    private final DemoGuard protection;
     private final SimpMessagingTemplate broker;
 
     @EventListener
@@ -32,13 +33,15 @@ public class PresenceEventListener {
             ChatValidation.validRoomId(roomId);
             presence.connect(sessionId, roomId, displayName);
             publish(roomId);
-        } catch (IllegalArgumentException | ResponseStatusException ignored) {
+        } catch (RuntimeException ignored) {
+            protection.closeSocket(sessionId);
             // Invalid presence metadata must not bring down the WebSocket broker.
         }
     }
 
     @EventListener
     public void disconnected(SessionDisconnectEvent event) {
+        protection.closeSocket(event.getSessionId());
         var roomId = presence.disconnect(event.getSessionId());
         if (roomId != null) {
             publish(roomId);

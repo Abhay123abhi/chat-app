@@ -45,7 +45,7 @@ class MessageIntegrationTest {
             room.setRoomId("concurrent");
             mongo.insert(room);
 
-            var service = new MessageService(mongo);
+            var service = new MessageService(mongo, new com.substring.chat.config.GuardProperties());
             ExecutorService executor = Executors.newFixedThreadPool(12);
 
             try {

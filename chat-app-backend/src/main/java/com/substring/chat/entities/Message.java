@@ -23,4 +23,6 @@ public class Message {
     private String sender;
     private String content;
     private Instant timeStamp;
+    @org.springframework.data.mongodb.core.index.Indexed(expireAfter = "0s")
+    private Instant expiresAt;
 }

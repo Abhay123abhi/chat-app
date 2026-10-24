@@ -1,5 +1,6 @@
 package com.substring.chat.services;
 
+import com.substring.chat.config.GuardProperties;
 import com.substring.chat.dto.MessagePageResponse;
 import com.substring.chat.dto.MessageRequest;
 import com.substring.chat.entities.Message;
@@ -33,6 +34,7 @@ public class MessageService {
     private static final long WRITER_LOCK_TIMEOUT_SECONDS = 5L;
 
     private final MongoTemplate mongo;
+    private final GuardProperties guard;
     private final ReentrantLock[] writers = IntStream.range(0, WRITER_STRIPES)
             .mapToObj(ignored -> new ReentrantLock())
             .toArray(ReentrantLock[]::new);
@@ -65,6 +67,10 @@ public class MessageService {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found");
             }
 
+            if (guard.isEnabled() && room.getNextSequence() > guard.getMaxMessagesPerRoom()) {
+                throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Room message capacity reached");
+            }
+
             var message = new Message();
             message.setRoomId(roomId);
             message.setClientMessageId(request.clientMessageId());
@@ -72,6 +78,8 @@ public class MessageService {
             message.setSender(request.sender().trim());
             message.setContent(request.content().trim());
             message.setTimeStamp(Instant.now());
+            if (guard.isEnabled()) message.setExpiresAt(message.getTimeStamp().plus(
+                    java.time.Duration.ofDays(Math.max(1, guard.getRetentionDays()))));
 
             try {
                 return mongo.insert(message);

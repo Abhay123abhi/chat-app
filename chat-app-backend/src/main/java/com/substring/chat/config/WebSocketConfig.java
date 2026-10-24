@@ -1,5 +1,13 @@
 package com.substring.chat.config;
 
+import com.substring.chat.config.GuardProperties;
+import com.substring.chat.security.DemoGuard;
+import com.substring.chat.repositories.RoomRepository;
+import java.util.Map;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -19,6 +27,15 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+    private final GuardProperties guard;
+    private final DemoGuard protection;
+    private final RoomRepository rooms;
+
+    public WebSocketConfig(GuardProperties guard, DemoGuard protection, RoomRepository rooms) {
+        this.guard = guard;
+        this.protection = protection;
+        this.rooms = rooms;
+    }
     private static final String TOPIC_PREFIX = "/topic";
     private static final String APPLICATION_PREFIX = "/app";
     private static final String CHAT_ENDPOINT = "/ws/chat";
@@ -45,7 +62,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint(CHAT_ENDPOINT);
+        registry.addEndpoint(CHAT_ENDPOINT).addInterceptors(new HandshakeInterceptor() {
+            @Override
+            public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
+                    WebSocketHandler handler, Map<String, Object> attributes) {
+                if (guard.isEnabled() && !guard.isChatEnabled()) return false;
+                var remote = request.getRemoteAddress();
+                attributes.put("guardIp", remote == null ? "unknown" : remote.getHostString());
+                return true;
+            }
+            @Override
+            public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
+                    WebSocketHandler handler, Exception error) {}
+        });
     }
 
     @Override
@@ -63,12 +92,41 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 var headers = StompHeaderAccessor.wrap(message);
 
+                if (headers.getCommand() == StompCommand.CONNECT && guard.isEnabled()) {
+                    var session = headers.getSessionId();
+                    var roomId = headers.getFirstNativeHeader("roomId");
+                    var displayName = headers.getFirstNativeHeader("displayName");
+                    var attrs = headers.getSessionAttributes();
+                    var ip = attrs == null ? "unknown" : String.valueOf(attrs.getOrDefault("guardIp", "unknown"));
+                    if (!guard.isChatEnabled() || session == null || roomId == null
+                            || displayName == null || displayName.isBlank() || displayName.trim().length() > 50
+                            || !roomId.matches("[A-Za-z0-9_-]{1,64}")
+                            || !rooms.existsByRoomId(roomId)
+                            || !protection.openSocket(session, ip)
+                            || !protection.joinSocketRoom(session, roomId)) {
+                        if (session != null) protection.closeSocket(session);
+                        throw new MessageDeliveryException("Public demo connection limit reached");
+                    }
+                }
+                if (headers.getCommand() == StompCommand.DISCONNECT) {
+                    protection.closeSocket(headers.getSessionId());
+                }
                 if (headers.getCommand() == StompCommand.SEND) {
                     throw new MessageDeliveryException("Send messages through the durable REST endpoint");
                 }
 
-                if (headers.getCommand() == StompCommand.SUBSCRIBE && !isAllowedSubscription(headers.getDestination())) {
-                    throw new MessageDeliveryException("Invalid room subscription");
+                if (headers.getCommand() == StompCommand.SUBSCRIBE) {
+                    var destination = headers.getDestination();
+                    if (!isAllowedSubscription(destination)) {
+                        throw new MessageDeliveryException("Invalid room subscription");
+                    }
+                    if (guard.isEnabled()) {
+                        var roomId = protection.roomForSession(headers.getSessionId());
+                        if (roomId == null || (!("/topic/room/" + roomId).equals(destination)
+                                && !("/topic/presence/" + roomId).equals(destination))) {
+                            throw new MessageDeliveryException("Room subscription not authorized for this session");
+                        }
+                    }
                 }
 
                 return message;
