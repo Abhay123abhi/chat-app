@@ -46,9 +46,10 @@ async function openClient(name) {
   const connected = waitForFrame(socket, "CONNECTED");
   socket.send(`CONNECT\naccept-version:1.2\nheart-beat:0,0\nroomId:${ROOM}\ndisplayName:${name}\n\n\0`);
   await connected;
-  const receipt = waitForFrame(socket, "RECEIPT");
-  socket.send(`SUBSCRIBE\nid:messages\ndestination:/topic/room/${ROOM}\nreceipt:subscribed\nack:auto\n\n\0`);
-  await receipt;
+  socket.send(`SUBSCRIBE\nid:messages\ndestination:/topic/room/${ROOM}\nack:auto\n\n\0`);
+  // Spring simple broker does not guarantee SUBSCRIBE receipt frames.
+  // Wait briefly for the subscription to register before publishing the REST message.
+  await new Promise(resolve => setTimeout(resolve, 500));
   return socket;
 }
 
