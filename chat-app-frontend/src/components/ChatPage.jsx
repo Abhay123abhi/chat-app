@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import { FiArrowDown, FiArrowLeft, FiHash, FiSend, FiUsers, FiWifi } from "react-icons/fi";
@@ -127,7 +126,7 @@ export default function ChatPage() {
     }
 
     const client = new Client({
-      webSocketFactory: () => new SockJS("/chat"),
+      brokerURL: `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/chat`,
       connectHeaders: { roomId, displayName: currentUser },
       reconnectDelay: 3000,
       heartbeatIncoming: 10000,

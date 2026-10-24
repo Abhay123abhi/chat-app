@@ -9,7 +9,7 @@ Users can create a room, join with a display name, send messages, see online/off
 - Java 21 + Spring Boot
 - MongoDB
 - React + Vite
-- STOMP over SockJS
+- STOMP over native WebSocket
 - Docker Compose
 
 ## How it works
@@ -85,7 +85,7 @@ Then open the Vite URL, normally `http://localhost:5173`.
 ## Main flow
 
 1. Create or join a room.
-2. The browser connects to `/chat` using STOMP/SockJS.
+2. The browser connects to `/chat` using STOMP over native WebSocket.
 3. Sending a message calls `POST /api/v1/rooms/{roomId}/messages`.
 4. The backend stores the message in MongoDB.
 5. The saved message is published to `/topic/room/{roomId}`.

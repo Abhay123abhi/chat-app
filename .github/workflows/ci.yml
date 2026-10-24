@@ -40,11 +40,9 @@ jobs:
         working-directory: chat-app-frontend
       - run: npm run lint -- --max-warnings=0
         working-directory: chat-app-frontend
-      - name: Report production dependency advisories
+      - name: Enforce production dependency security
+        run: npm audit --omit=dev --audit-level=high
         working-directory: chat-app-frontend
-        run: |
-          npm audit --omit=dev --json > npm-audit-runtime.json || true
-          node -e 'const r = require("./npm-audit-runtime.json"); console.log("Runtime vulnerabilities:", JSON.stringify(r.metadata?.vulnerabilities)); for (const [name, v] of Object.entries(r.vulnerabilities || {})) console.log(name, v.severity, v.range, JSON.stringify(v.fixAvailable));'
       - run: npm test
         working-directory: chat-app-frontend
       - run: npm run build
@@ -63,7 +61,8 @@ jobs:
           set -euo pipefail
           ready=0
           for attempt in $(seq 1 60); do
-            if curl -fsS http://localhost:3000/chat/info >/dev/null 2>&1; then
+            status=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:3000/api/v1/rooms/ci-room || true)
+            if [[ "$status" == "404" || "$status" == "200" ]]; then
               ready=1
               break
             fi
@@ -77,6 +76,8 @@ jobs:
           echo "$saved" | grep -q '"content":"hello"'
           history=$(curl -fsS 'http://localhost:3000/api/v1/rooms/ci-room/messages?limit=10')
           echo "$history" | grep -q '"clientMessageId":"ci-1"'
+      - name: Native WebSocket / STOMP smoke test
+        run: node .github/scripts/stomp-smoke.mjs
       - if: always()
         run: docker compose logs --tail=100
       - if: always()
