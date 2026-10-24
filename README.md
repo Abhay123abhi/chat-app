@@ -1,130 +1,86 @@
 # Room Chat
 
-A small real-time guest chat app built with Spring Boot, MongoDB, React and STOMP/WebSocket.
+A lightweight real-time guest chat application built with **React, Spring Boot and MongoDB**. Create or join a room without signing up, then chat live with persistent message history.
 
-Users can create a room, join with a display name, send messages, see online/offline room presence and recover missed messages after reconnecting.
+## What I built
 
-## Stack
+- **Rooms:** Create or join by room ID and display name, without authentication.
+- **Messaging:** REST-first message storage with live STOMP/WebSocket delivery, duplicate-safe retries and history pagination.
+- **Presence:** Online/offline members and last-seen information for the current backend process.
+- **Recovery:** Reconnect to live updates and fetch missed messages from MongoDB.
+- **UI:** Responsive chat layout, message dates, connection status and send/retry feedback.
 
-- Java 21 + Spring Boot 4.1.2
-- MongoDB
-- React + Vite
-- STOMP over native WebSocket
-- Docker Compose
+**Stack:** React 18 + Vite, Java 21 + Spring Boot 4.1.2, MongoDB 8, native STOMP/WebSocket, Docker Compose and Nginx.
 
-## How it works
+## Architecture
 
 ```text
-React client
-   |
-   | REST: create/join room, send message, load history
-   v
-Spring Boot
-   |
-   | persist
-   v
-MongoDB
-
-Spring Boot -- STOMP/WebSocket --> connected room members
+Browser (React)
+  ├── REST /api/v1/... ────────┐
+  └── WebSocket /ws/chat ──────┤
+                               ▼
+                   Nginx / Vite proxy
+                               │
+                               ▼
+                  Spring Boot backend
+                    ├── Save/load messages ──► MongoDB
+                    ├── Room and presence APIs
+                    └── STOMP /topic/room/{id} ──► Connected clients
 ```
 
-Messages are written through the REST API first. After MongoDB stores a message, the backend publishes it to the room over STOMP. If a client reconnects, it loads message history again and merges anything it missed.
-
-Presence is session based: a connected WebSocket session is Online. Users seen during the current backend process can appear Offline after disconnecting. Disconnected member entries expire after 24 hours (checked every 15 minutes).
+**Message flow:** Create/join room → send message through REST → store in MongoDB → publish to subscribed clients → synchronize missed messages after reconnecting. Presence is kept in backend memory.
 
 ## Run locally
 
-The easiest way is Docker Desktop.
+### Option A — All services in Docker (recommended)
 
-```bash
-git clone https://github.com/Abhay123abhi/chat-app.git
-cd chat-app
-docker compose up --build
+From the repository root (requires Docker Desktop):
+
+```powershell
+docker compose up -d --build frontend
 ```
 
-Open:
+Compose starts **MongoDB → backend → frontend** automatically. Open **http://localhost:3000**. To inspect the database, optionally start `docker compose up -d mongo-express` and open **http://localhost:8081**.
 
-```text
-http://localhost:3000
-http://localhost:8081  --mongo express for GUI
-```
-
-Open two browser windows, join the same room with different names, and send messages between them.
-
-Stop the app with:
-
-```bash
+```powershell
+docker compose ps
+docker compose logs -f backend
 docker compose down
 ```
 
-MongoDB data is stored in the `mongo-data` Docker volume, so normal `docker compose down` does not delete chat history.
+`docker compose down` stops the services but preserves MongoDB messages in the named `mongo-data` volume. Do not add `-v` unless you intend to delete stored data.
 
-## Run for development
+### Option B — Frontend in VS Code, backend in Docker
 
-Start MongoDB:
-
-```bash
-docker compose up -d mongo
-```
-
-Run the backend from `chat-app-backend` (Java 21 required):
+Run from the repository root:
 
 ```powershell
-./mvnw.cmd spring-boot:run
-```
-
-Run the frontend from `chat-app-frontend`:
-
-```bash
+docker compose up -d --build backend
+cd chat-app-frontend
 npm ci
 npm run dev
 ```
 
-Then open the Vite URL, normally `http://localhost:5173`.
+Open **http://localhost:5173**. Vite proxies REST and WebSocket traffic to the backend on port 8080. To run Spring Boot directly in IntelliJ instead, MongoDB must be reachable from the host; the default Compose configuration does **not** publish its port 27017.
 
-For nonlocal MongoDB, set `SPRING_MONGODB_URI` before starting Spring Boot. The older `SPRING_DATA_MONGODB_URI` variable is temporarily accepted as a fallback to ease local or deployment migration.
+## Verify
 
-## Chat UI
-
-The conversation view uses the room ID header, live connection badge, grouped online/offline members with last-seen timestamps, day separators, durable message bubbles and an Enter-to-send composer. These are presentation changes; REST-first persistence and native STOMP behavior remain unchanged.
-
-## Main flow
-
-1. Create or join a room.
-2. The browser connects to `/chat` using STOMP over native WebSocket.
-3. Sending a message calls `POST /api/v1/rooms/{roomId}/messages`.
-4. The backend stores the message in MongoDB.
-5. The saved message is published to `/topic/room/{roomId}`.
-6. Connected clients receive it immediately.
-7. On reconnect, the client loads history and merges missed messages.
-
-## Useful endpoints
-
-```text
-POST /api/v1/rooms
-GET  /api/v1/rooms/{roomId}
-POST /api/v1/rooms/{roomId}/messages
-GET  /api/v1/rooms/{roomId}/messages
-GET  /api/v1/rooms/{roomId}/presence
-```
-
-## Tests
-
-Backend:
-
-```bash
-cd chat-app-backend
-./mvnw verify
-```
-
-Frontend:
-
-```bash
-cd chat-app-frontend
-node --test src/services/messageState.test.js
+```powershell
+# From chat-app-frontend
+npm run lint -- --max-warnings=0
+npm test
 npm run build
 ```
 
-## Current scope
+Backend tests: run `./mvnw.cmd verify` from `chat-app-backend` on Windows (Docker Desktop is needed for Testcontainers).
 
-This is a guest-room, not a private messaging platform. Room IDs are not access control, users are not authenticated, and presence is kept in memory for the current backend instance.
+## Routes and scope
+
+| Path | Purpose |
+| --- | --- |
+| `/` | Create/join room |
+| `/chat` | React chat page |
+| `/ws/chat` | STOMP WebSocket endpoint |
+| `/api/v1/rooms/...` | Room, message, history and presence REST APIs |
+
+The guest session is held in React memory: refreshing `/chat` returns to the entry page. Room IDs are **not** authentication or access control; this demo is not designed for private or sensitive conversations.

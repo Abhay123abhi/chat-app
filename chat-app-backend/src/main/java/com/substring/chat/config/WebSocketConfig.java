@@ -21,7 +21,7 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private static final String TOPIC_PREFIX = "/topic";
     private static final String APPLICATION_PREFIX = "/app";
-    private static final String CHAT_ENDPOINT = "/chat";
+    private static final String CHAT_ENDPOINT = "/ws/chat";
     private static final long HEARTBEAT_INTERVAL_MS = 10_000L;
     private static final int MESSAGE_SIZE_LIMIT_BYTES = 8_192;
     private static final int SEND_BUFFER_SIZE_LIMIT_BYTES = 65_536;

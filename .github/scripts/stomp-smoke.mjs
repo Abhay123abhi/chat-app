@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 const ORIGIN = process.env.SMOKE_ORIGIN ?? "http://localhost:3000";
 const ROOM = "ci-live-chat";
-const wsUrl = ORIGIN.replace(/^http/, "ws") + "/chat";
+const wsUrl = ORIGIN.replace(/^http/, "ws") + "/ws/chat";
 const base = ORIGIN + "/api/v1/rooms";
 const sockets = [];
 
